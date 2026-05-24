@@ -4,19 +4,19 @@ android:height="24dp"
 android:viewportWidth="24"
 android:viewportHeight="24">
 
-<!-- Верхняя синяя стрелка (Тонкая, укороченная по горизонтали) -->
+<!-- Верхняя синяя стрелка (увеличена, смещена вверх и влево) -->
 <path
     android:strokeColor="#2962FF"
     android:strokeWidth="1.8"
     android:strokeLineCap="round"
     android:strokeLineJoin="round"
-    android:pathData="M 7.5,13.5 C 6.5,10.5 8.0,7.5 10.5,7.5 L 14.5,7.5 M 12.0,4.5 L 14.5,7.5 L 12.0,10.5" />
+    android:pathData="M 5.0,12.0 C 4.0,8.0 7.0,5.0 11.0,5.0 L 16.5,5.0 M 13.5,1.5 L 16.5,5.0 L 13.5,8.5" />
 
-<!-- Нижняя серая стрелка (Абсолютно симметрична напротив) -->
+<!-- Нижняя серая стрелка (увеличена, симметрично смещена вниз и вправо) -->
 <path
     android:strokeColor="#B0BEC5"
     android:strokeWidth="1.8"
     android:strokeLineCap="round"
     android:strokeLineJoin="round"
-    android:pathData="M 16.5,10.5 C 17.5,13.5 16.0,16.5 13.5,16.5 L 9.5,16.5 M 12.0,19.5 L 9.5,16.5 L 12.0,13.5" />
+    android:pathData="M 19.0,12.0 C 20.0,16.0 17.0,19.0 13.0,19.0 L 7.5,19.0 M 10.5,22.5 L 7.5,19.0 L 10.5,15.5" />
 </vector>

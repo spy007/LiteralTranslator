@@ -634,8 +634,9 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
         // Центральная кнопка
         Box(
             modifier = Modifier
+                .padding(end = 10.dp)
                 .align(Alignment.Center)
-                .size(44.dp)
+                .size(66.dp)
                 .shadow(4.dp, shape = CircleShape)
                 .background(Color.White, shape = CircleShape),
             contentAlignment = Alignment.Center
@@ -648,7 +649,6 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
                     painter = painterResource(id = R.drawable.ic_swap),
                     contentDescription = "Сменить языки",
                     tint = Color.Unspecified, // Сохраняем цвета стрелок из XML
-                    modifier = Modifier.size(24.dp)
                 )
             }
         }

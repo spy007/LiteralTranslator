@@ -1,0 +1,43 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+android:width="512dp"
+android:height="512dp"
+android:viewportWidth="512"
+android:viewportHeight="512">
+
+<!-- 1. Массивная белая буква L (Смещена чуть правее, ближе к центру) -->
+<path
+    android:pathData="M 195,170 L 195,320 L 295,320"
+    android:strokeColor="#FFFFFF"
+    android:strokeWidth="60"
+    android:strokeLineCap="round"
+    android:strokeLineJoin="round" />
+
+<!-- 2. Иероглиф 文 (Текст/Язык) — смещен еще левее, накладываясь на пространство буквы L -->
+<!-- Горизонтальная верхняя линия -->
+<path
+    android:pathData="M 255,210 L 355,210"
+    android:strokeColor="#E0F7FA"
+    android:strokeWidth="24"
+    android:strokeLineCap="round" />
+
+<!-- Верхняя точка-акцент над линией -->
+<path
+    android:pathData="M 305,170 L 305,195"
+    android:strokeColor="#E0F7FA"
+    android:strokeWidth="24"
+    android:strokeLineCap="round" />
+
+<!-- Левая плавная откидная ножка -->
+<path
+    android:pathData="M 305,210 C 285,260 240,300 215,320"
+    android:strokeColor="#E0F7FA"
+    android:strokeWidth="24"
+    android:strokeLineCap="round" />
+
+<!-- Правая плавная ножка с изгибом на финише -->
+<path
+    android:pathData="M 280,240 C 305,265 335,300 370,320"
+    android:strokeColor="#E0F7FA"
+    android:strokeWidth="24"
+    android:strokeLineCap="round" />
+</vector>
