@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.literaltranslator.ui.theme.TestAppTheme
+import androidx.compose.foundation.text.BasicTextField
 
 // Точная цветовая палитра из оригинального дизайна
 val BrandBlue = Color(0xFF2962FF)
@@ -79,30 +80,14 @@ fun TranslatorScreenPreview() {
 val HeaderWaveShape = GenericShape { size, _ ->
     moveTo(0f, 0f)
     lineTo(size.width, 0f)
-    lineTo(size.width, size.height * 0.65f)
+    // Правый край панели делаем совсем узким (90dp в пропорциях)
+    lineTo(size.width, size.height * 0.55f)
+    // Рисуем крутой изгиб к глубокому левому краю (160dp в пропорциях)
     cubicTo(
-        size.width * 0.7f, size.height * 0.65f,
-        size.width * 0.3f, size.height,
+        size.width * 0.65f, size.height * 0.5f,
+        size.width * 0.35f, size.height*2,
         0f, size.height
     )
-    close()
-}
-
-// 2. Волнообразная форма для Окна ввода (Английский) - волна уходит вверх налево внизу
-val InputWaveShape = GenericShape { size, _ ->
-    val w = size.width
-    val h = size.height
-    val r = 60f // Мягкое закругление углов
-
-    moveTo(r, 0f)
-    lineTo(w - r, 0f)
-    quadraticBezierTo(w, 0f, w, r)
-    lineTo(w, h - r)
-    quadraticBezierTo(w, h, w - r, h)
-    lineTo(w * 0.4f, h)
-    cubicTo(w * 0.25f, h, w * 0.15f, h * 0.85f, 0f, h * 0.82f)
-    lineTo(0f, r)
-    quadraticBezierTo(0f, 0f, r, 0f)
     close()
 }
 
@@ -184,31 +169,29 @@ fun TranslatorScreenContent(
             .fillMaxSize()
             .background(BackgroundGray)
     ) {
-        // Верхний декоративный фон
+        // 1. СИНЯЯ ПАНЕЛЬ С КРУТОЙ ВОЛНОЙ (Самый нижний слой)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(60.dp) // Фиксированная высота для глубокого перепада
                 .background(BrandBlue, shape = HeaderWaveShape)
         )
 
-        // Скроллируемый контент экрана
+        // 2. ВЕСЬ КОНТЕНТ (Ложится поверх синего фона, ничего не перекрывается)
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
         ) {
-            // Верхний бар навигации
+
+            // Верхний бар навигации (Текст белый, отлично виден на синем)
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 16.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = {}) {
-                    // Используем стандартную иконку списка (подходит под меню)
                     Icon(
                         painter = painterResource(id = R.drawable.menu),
                         contentDescription = "Меню",
@@ -237,78 +220,91 @@ fun TranslatorScreenContent(
             }
 
             // ОКНО 1: Ввод текста (Английский)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(CardInputGray, shape = InputWaveShape)
-                    .padding(24.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { onIntent(TranslatorIntent.SpeakSourceText) },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_sound),
-                                    contentDescription = "Озвучить исходный текст",
-                                    tint = TextDark
+            // Форма полностью повторяет оригинальный дизайн: закругление только снизу!
+            val inputCardShape = RoundedCornerShape(
+                topStart = 0.dp,
+                topEnd = 0.dp,
+                bottomStart = 32.dp,
+                bottomEnd = 32.dp
+            )
+            Box {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(CardInputGray, shape = inputCardShape)
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 50.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(
+                                    onClick = { onIntent(TranslatorIntent.SpeakSourceText) },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_sound),
+                                        contentDescription = "Озвучить исходный текст",
+                                        tint = TextDark
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = state.sourceLanguageName,
+                                    color = TextLightGray,
+                                    fontSize = 14.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            // Динамическое имя исходного языка
-                            Text(
-                                text = state.sourceLanguageName,
-                                color = TextLightGray,
-                                fontSize = 14.sp
-                            )
+                            IconButton(
+                                onClick = { onIntent(TranslatorIntent.ClearText) },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = "Очистить",
+                                    tint = TextLightGray
+                                )
+                            }
                         }
-                        // Кнопка очистки текста
-                        IconButton(
-                            onClick = { onIntent(TranslatorIntent.ClearText) },
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = "Очистить",
-                                tint = TextLightGray
-                            )
-                        }
-                    }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Поле ввода текста (вместо статического Row со словом Hope)
-                    TextField(
-                        value = state.inputText,
-                        onValueChange = { newText ->
-                            // Отправляем интент во ViewModel, автоперевод сработает сам через 600мс!
-                            onIntent(TranslatorIntent.ChangeInputText(newText))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        placeholder = { Text("Type something...", color = TextLightGray) },
-                        textStyle = androidx.compose.ui.text.TextStyle(
-                            color = TextDark,
-                            fontSize = 18.sp,
-                            lineHeight = 26.sp
+                        // Поле ввода текста
+                        BasicTextField(
+                            value = state.inputText,
+                            onValueChange = { newText ->
+                                onIntent(
+                                    TranslatorIntent.ChangeInputText(
+                                        newText
+                                    )
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                color = TextDark,
+                                fontSize = 18.sp,
+                                lineHeight = 26.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            decorationBox = { innerTextField ->
+                                if (state.inputText.isEmpty()) {
+                                    Text(
+                                        text = "Type something...",
+                                        color = TextLightGray,
+                                        fontSize = 18.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
                         )
-                    )
-
-                    Spacer(modifier = Modifier.height(30.dp))
+                    }
                 }
+
             }
+            // Дальше идет ваше ОКНО 2 (Португальский, белый фон)...
+
 
             // ОКНО 2: Перевод (Португальский, белый фон)
             Box(
