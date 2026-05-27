@@ -20,8 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
@@ -39,10 +37,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.literaltranslator.ui.theme.TestAppTheme
 import androidx.compose.foundation.text.BasicTextField
 
-// Точная цветовая палитра из оригинального дизайна
+// Precise color palette from the original design
 val BrandBlue = Color(0xFF2962FF)
-val BackgroundGray = Color(0xFFF4F6F9)   // Светлый фон приложения
-val CardInputGray = Color(0xFFECEFF1)    // Светло-серое окно для английского текста
+val BackgroundGray = Color(0xFFF4F6F9)   // Light background for the application
 val TextDark = Color(0xFF0D1B2A)
 val TextLightGray = Color(0xFF90A4AE)
 val TagGreen = Color(0xFF4CAF50)
@@ -64,7 +61,7 @@ class MainActivity: ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun TranslatorScreenPreview() {
-    // Передаем просто готовые текстовые данные, рендеринг займет долю секунды
+    // Pass static text data; rendering will take a fraction of a second
     TranslatorScreenContent(
         state = TranslatorState(
             inputText = "Hope you like this approach",
@@ -72,45 +69,48 @@ fun TranslatorScreenPreview() {
             sourceLanguageName = "English",
             targetLanguageName = "Portuguese"
         ),
-        onIntent = {} // Пустая лямбда, клики в превью логику дергать не будут
+        onIntent = {} // Empty lambda; clicks in preview won't trigger logic
     )
 }
 
-// 1. Кастомная форма верхнего синего фона (узкая плавная волна)
-val HeaderWaveShape = GenericShape { size, _ ->
-    moveTo(0f, 0f)
-    lineTo(size.width, 0f)
-    // Правый край панели делаем совсем узким (90dp в пропорциях)
-    lineTo(size.width, size.height * 0.55f)
-    // Рисуем крутой изгиб к глубокому левому краю (160dp в пропорциях)
-    cubicTo(
-        size.width * 0.65f, size.height * 0.5f,
-        size.width * 0.35f, size.height*2,
-        0f, size.height
-    )
-    close()
-}
-
-// 3. Волнообразная форма для Окна перевода (Португальский) - стыкуется с верхней волной
-val TranslateWaveShape = GenericShape { size, _ ->
+// Refined shapes for CustomTranslatorDesign with "S-curve" transitions
+// Top wave (Blue): Horizontal line with arcs at both ends
+val TopWaveDesignShape = GenericShape { size, _ ->
     val w = size.width
     val h = size.height
-    val r = 60f
+    val curveH = w * 0.15f // Height of the curve transition
 
     moveTo(0f, 0f)
-    cubicTo(w * 0.15f, 0f, w * 0.25f, h * 0.12f, w * 0.4f, h * 0.12f)
-    lineTo(w - r, h * 0.12f)
-    quadraticBezierTo(w, h * 0.12f, w, h * 0.12f + r)
-    lineTo(w, h - r)
-    quadraticBezierTo(w, h, w - r, h)
-    lineTo(r, h)
-    quadraticBezierTo(0f, h, 0f, h - r)
+    lineTo(w, 0f)
+    lineTo(w, h - curveH)
+    // Right arc (concave)
+    cubicTo(
+        w, h - curveH * 0.3f,
+        w * 0.85f, h,
+        w * 0.7f, h
+    )
+    // Horizontal line
+    lineTo(w * 0.3f, h)
+    // Left arc (convex)
+    cubicTo(
+        w * 0.15f, h,
+        0f, h + curveH * 0.5f,
+        0f, h + curveH
+    )
     close()
 }
+
+@Preview(showBackground = true)
+@Composable
+fun CustomTranslatorDesignPreview() {
+    TestAppTheme { CustomTranslatorDesign() } }
+
+@Composable
+fun CustomTranslatorDesign() {}
 
 @Composable
 fun TranslatorScreen(modifier: Modifier = Modifier) {
-    // 1. Создаем ViewModel ТОЛЬКО здесь. Preview сюда заходить не будет.
+    // 1. Create ViewModel ONLY here. Preview will not enter here.
     val factory = viewModelFactory {
         initializer {
             TranslatorViewModel(repository = TranslationRepositoryImpl())
@@ -119,7 +119,7 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
     val viewModel: TranslatorViewModel = viewModel(factory = factory)
     val state by viewModel.viewState.collectAsState()
 
-    // Слушаем эффекты
+    // Listen for effects
     val context = androidx.compose.ui.platform.LocalContext.current
     val ttsManager = remember { TextToSpeechManager(context) }
 
@@ -143,19 +143,349 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
                 }
 
                 TranslatorIntent.TranslatorEffect.TriggerHapticFeedback -> {
-                    // Код вызова вибрации устройства
+                    // Vibration call code
                 }
-                // ИСПРАВЛЕНО: Удален дубликат ветки TriggerHapticFeedback
+                // FIXED: Duplicate branch for TriggerHapticFeedback removed
             }
         }
     }
 
-    // Передаем все чистые данные в Stateless-экран
+    // Pass all clean data to the Stateless screen
     TranslatorScreenContent(
         state = state,
         modifier = modifier,
         onIntent = (viewModel::handleIntent)
     )
+}
+
+
+@Composable
+fun TopNavigationBar() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = {}) {
+            Icon(
+                painter = painterResource(id = R.drawable.menu),
+                contentDescription = "Menu",
+                tint = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun TextToTranslateSection(
+    state: TranslatorState,
+    onIntent: (TranslatorIntent) -> Unit
+) {
+    Box {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 50.dp)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { onIntent(TranslatorIntent.SpeakSourceText) },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_sound),
+                                contentDescription = "Source speech",
+                                tint = TextDark
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = state.sourceLanguageName,
+                            color = TextLightGray,
+                            fontSize = 14.sp
+                        )
+                    }
+                    IconButton(
+                        onClick = { onIntent(TranslatorIntent.ClearText) },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = "Clear",
+                            tint = TextLightGray
+                        )
+                    }
+                }
+
+                // Text input field
+                BasicTextField(
+                    value = state.inputText,
+                    onValueChange = { newText ->
+                        onIntent(
+                            TranslatorIntent.ChangeInputText(
+                                newText
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        color = TextDark,
+                        fontSize = 18.sp,
+                        lineHeight = 26.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    decorationBox = { innerTextField ->
+                        if (state.inputText.isEmpty()) {
+                            Text(
+                                text = "Type something...",
+                                color = TextLightGray,
+                                fontSize = 18.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TranslationSection(
+    state: TranslatorState,
+    onIntent: (TranslatorIntent) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset(y = (-20).dp) // Slight overlap for seamless wave connection
+            .padding(24.dp)
+    ) {
+        Column {
+            Spacer(modifier = Modifier.height(24.dp)) // Compensate for top curve
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { onIntent(TranslatorIntent.SpeakTargetText) },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_sound),
+                            contentDescription = "Target speech",
+                            tint = BrandBlue
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = state.targetLanguageName,
+                        color = TextDark,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = "Favorites",
+                        tint = Color(0xFFFFB300),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    // Use system icon as placeholder for copy
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_copy),
+                        contentDescription = "Copy",
+                        tint = TextLightGray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "More",
+                        tint = TextLightGray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            // DISPLAY LOGIC: Shimmer loading or Text
+            if (state.isLoading) {
+                // Shimmer effect during translation or package download
+                Box(
+                    modifier = Modifier
+                        .width(180.dp)
+                        .height(36.dp)
+                        .shimmerLoading(isLoading = true, shape = RoundedCornerShape(8.dp))
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(18.dp)
+                        .shimmerLoading(isLoading = true, shape = RoundedCornerShape(4.dp))
+                )
+
+// Inside WINDOW 2 (Portuguese), content block ( isLoading == false ):
+            } else {
+                // 1. Tab switcher with dynamic highlights and clicks
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // TRANSLATION Tab
+                    val isTranslationActive = state.activeTab == TranslatorTab.TRANSLATION
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null // Remove gray box on click
+                        ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.TRANSLATION)) }
+                    ) {
+                        Text(
+                            text = "Translation",
+                            color = if (isTranslationActive) BrandBlue else TextLightGray,
+                            fontSize = 14.sp,
+                            fontWeight = if (isTranslationActive) FontWeight.Bold else FontWeight.Normal
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(width = 50.dp, height = 2.dp)
+                                .background(if (isTranslationActive) BrandBlue else Color.Transparent)
+                        )
+                    }
+
+                    // DEFINITIONS Tab
+                    val isDefinitionsActive = state.activeTab == TranslatorTab.DEFINITIONS
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.DEFINITIONS)) }
+                    ) {
+                        Text(
+                            text = "Definitions",
+                            color = if (isDefinitionsActive) BrandBlue else TextLightGray,
+                            fontSize = 14.sp,
+                            fontWeight = if (isDefinitionsActive) FontWeight.Bold else FontWeight.Normal
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(width = 50.dp, height = 2.dp)
+                                .background(if (isDefinitionsActive) BrandBlue else Color.Transparent)
+                        )
+                    }
+
+                    // SYNONYMS Tab
+                    val isSynonymsActive = state.activeTab == TranslatorTab.SYNONYMS
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.SYNONYMS)) }
+                    ) {
+                        Text(
+                            text = "Synonyms",
+                            color = if (isSynonymsActive) BrandBlue else TextLightGray,
+                            fontSize = 14.sp,
+                            fontWeight = if (isSynonymsActive) FontWeight.Bold else FontWeight.Normal
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(width = 50.dp, height = 2.dp)
+                                .background(if (isSynonymsActive) BrandBlue else Color.Transparent)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 2. DYNAMIC CONTENT BASED ON SELECTED TAB
+                when (state.activeTab) {
+                    TranslatorTab.TRANSLATION -> {
+                        Text(
+                            text = state.translatedText.ifBlank { "Translation will appear here..." },
+                            color = if (state.translatedText.isBlank()) TextLightGray else TextDark,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    TranslatorTab.DEFINITIONS -> {
+                        if (state.definitions.isEmpty()) {
+                            Text(
+                                text = "No definitions available.",
+                                color = TextLightGray,
+                                fontSize = 16.sp
+                            )
+                        } else {
+                            // Green "noun" tag from original design
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        TagGreen.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "noun",
+                                    color = TagGreen,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Render definitions list
+                            state.definitions.forEach { definition ->
+                                DefinitionItem(text = definition, example = "")
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
+                        }
+                    }
+
+                    TranslatorTab.SYNONYMS -> {
+                        if (state.synonyms.isEmpty()) {
+                            Text(
+                                text = "No synonyms found.",
+                                color = TextLightGray,
+                                fontSize = 16.sp
+                            )
+                        } else {
+                            // Render synonyms as a comma-separated list
+                            Text(
+                                text = state.synonyms.joinToString(separator = ", "),
+                                color = TextDark,
+                                fontSize = 16.sp,
+                                lineHeight = 22.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -167,381 +497,98 @@ fun TranslatorScreenContent(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .background(Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.6f)
+                    .background(BackgroundGray, shape = TopWaveDesignShape)
+            ) {
+                Box(modifier = Modifier.padding(top = 30.dp)) {
+                    TextToTranslateSection(state, onIntent)
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.4f)
+            ) { TranslationSection(state, onIntent) }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                BottomLanguageSelector {}
+            }
+        }
+        Row(modifier = Modifier
+            .fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .weight(0.8f)
+                    .height(60.dp)
+                    .background(BrandBlue, shape = TopWaveDesignShape)
+            ) { TopNavigationBar() }
+            Box(
+                modifier = Modifier
+                    .weight(0.2f)
+                    .height(60.dp)
+            )
+        }
+    }
+
+ /*
+    Box(
+        modifier = modifier
+            .fillMaxSize()
             .background(BackgroundGray)
     ) {
-        // 1. СИНЯЯ ПАНЕЛЬ С КРУТОЙ ВОЛНОЙ (Самый нижний слой)
+        // 1. BLUE PANEL WITH STEEP WAVE (Bottom-most layer)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp) // Фиксированная высота для глубокого перепада
+                .height(60.dp) // Fixed height for deep drop
                 .background(BrandBlue, shape = HeaderWaveShape)
         )
 
-        // 2. ВЕСЬ КОНТЕНТ (Ложится поверх синего фона, ничего не перекрывается)
+        // 2. ALL CONTENT (Layered on top of the blue background, no overlaps)
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
 
-            // Верхний бар навигации (Текст белый, отлично виден на синем)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {}) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.menu),
-                        contentDescription = "Меню",
-                        tint = Color.White
-                    )
-                }
-                Text(
-                    text = "Text translate",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(Color.White, shape = RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "T",
-                        color = BrandBlue,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            // ОКНО 1: Ввод текста (Английский)
-            // Форма полностью повторяет оригинальный дизайн: закругление только снизу!
+            // WINDOW 1: Text Input (English)
+            // Shape exactly matches original design: rounded only at the bottom!
             val inputCardShape = RoundedCornerShape(
                 topStart = 0.dp,
                 topEnd = 0.dp,
                 bottomStart = 32.dp,
                 bottomEnd = 32.dp
             )
-            Box {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(CardInputGray, shape = inputCardShape)
-                        .padding(horizontal = 24.dp)
-                        .padding(top = 50.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(
-                                    onClick = { onIntent(TranslatorIntent.SpeakSourceText) },
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_sound),
-                                        contentDescription = "Озвучить исходный текст",
-                                        tint = TextDark
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = state.sourceLanguageName,
-                                    color = TextLightGray,
-                                    fontSize = 14.sp
-                                )
-                            }
-                            IconButton(
-                                onClick = { onIntent(TranslatorIntent.ClearText) },
-                                modifier = Modifier.size(20.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Clear,
-                                    contentDescription = "Очистить",
-                                    tint = TextLightGray
-                                )
-                            }
-                        }
 
-                        // Поле ввода текста
-                        BasicTextField(
-                            value = state.inputText,
-                            onValueChange = { newText ->
-                                onIntent(
-                                    TranslatorIntent.ChangeInputText(
-                                        newText
-                                    )
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = androidx.compose.ui.text.TextStyle(
-                                color = TextDark,
-                                fontSize = 18.sp,
-                                lineHeight = 26.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            decorationBox = { innerTextField ->
-                                if (state.inputText.isEmpty()) {
-                                    Text(
-                                        text = "Type something...",
-                                        color = TextLightGray,
-                                        fontSize = 18.sp
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        )
-                    }
-                }
-
-            }
-            // Дальше идет ваше ОКНО 2 (Португальский, белый фон)...
+            // Next is WINDOW 2 (Portuguese, white background)...
 
 
-            // ОКНО 2: Перевод (Португальский, белый фон)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = (-20).dp) // Легкий нахлест для бесшовного соединения волн
-                    .background(Color.White, shape = TranslateWaveShape)
-                    .padding(24.dp)
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(24.dp)) // Компенсируем верхний изгиб волны
+            // WINDOW 2: Translation (Portuguese, white background)
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { onIntent(TranslatorIntent.SpeakTargetText) },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_sound),
-                                    contentDescription = "Озвучить перевод",
-                                    tint = BrandBlue
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = state.targetLanguageName,
-                                color = TextDark,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = "Избранное",
-                                tint = Color(0xFFFFB300),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            // Используем системную иконку списков как временную замену копированию
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_copy),
-                                contentDescription = "Копировать",
-                                tint = TextLightGray,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = "Еще",
-                                tint = TextLightGray,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    // ЛОГИКА ОТОБРАЖЕНИЯ: Загрузка (Shimmer) или Текст
-                    if (state.isLoading) {
-                        // Эффект мерцания пока качается пакет или идет перевод
-                        Box(
-                            modifier = Modifier
-                                .width(180.dp)
-                                .height(36.dp)
-                                .shimmerLoading(isLoading = true, shape = RoundedCornerShape(8.dp))
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(18.dp)
-                                .shimmerLoading(isLoading = true, shape = RoundedCornerShape(4.dp))
-                        )
-
-// Внутри ОКНА 2 (Португальский), блок отображения контента ( isLoading == false ):
-                    } else {
-                        // 1. Переключатель вкладок с динамической подсветкой и кликами
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            // Вкладка TRANSLATION
-                            val isTranslationActive = state.activeTab == TranslatorTab.TRANSLATION
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null // Убираем серый квадрат при клике, чтобы было красиво
-                                ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.TRANSLATION)) }
-                            ) {
-                                Text(
-                                    text = "Translation",
-                                    color = if (isTranslationActive) BrandBlue else TextLightGray,
-                                    fontSize = 14.sp,
-                                    fontWeight = if (isTranslationActive) FontWeight.Bold else FontWeight.Normal
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .size(width = 50.dp, height = 2.dp)
-                                        .background(if (isTranslationActive) BrandBlue else Color.Transparent)
-                                )
-                            }
-
-                            // Вкладка DEFINITIONS
-                            val isDefinitionsActive = state.activeTab == TranslatorTab.DEFINITIONS
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.DEFINITIONS)) }
-                            ) {
-                                Text(
-                                    text = "Definitions",
-                                    color = if (isDefinitionsActive) BrandBlue else TextLightGray,
-                                    fontSize = 14.sp,
-                                    fontWeight = if (isDefinitionsActive) FontWeight.Bold else FontWeight.Normal
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .size(width = 50.dp, height = 2.dp)
-                                        .background(if (isDefinitionsActive) BrandBlue else Color.Transparent)
-                                )
-                            }
-
-                            // Вкладка SYNONYMS
-                            val isSynonymsActive = state.activeTab == TranslatorTab.SYNONYMS
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.SYNONYMS)) }
-                            ) {
-                                Text(
-                                    text = "Synonyms",
-                                    color = if (isSynonymsActive) BrandBlue else TextLightGray,
-                                    fontSize = 14.sp,
-                                    fontWeight = if (isSynonymsActive) FontWeight.Bold else FontWeight.Normal
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .size(width = 50.dp, height = 2.dp)
-                                        .background(if (isSynonymsActive) BrandBlue else Color.Transparent)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // 2. ДИНАМИЧЕСКИЙ КОНТЕНТ В ЗАВИСИМОСТИ ОТ ВЫБРАННОЙ ВКЛАДКИ
-                        when (state.activeTab) {
-                            TranslatorTab.TRANSLATION -> {
-                                Text(
-                                    text = state.translatedText.ifBlank { "Translation will appear here..." },
-                                    color = if (state.translatedText.isBlank()) TextLightGray else TextDark,
-                                    fontSize = 28.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-
-                            TranslatorTab.DEFINITIONS -> {
-                                if (state.definitions.isEmpty()) {
-                                    Text(
-                                        text = "No definitions available.",
-                                        color = TextLightGray,
-                                        fontSize = 16.sp
-                                    )
-                                } else {
-                                    // Зеленый тег Noun как в оригинальном дизайне
-                                    Box(
-                                        modifier = Modifier
-                                            .background(
-                                                TagGreen.copy(alpha = 0.15f),
-                                                shape = RoundedCornerShape(4.dp)
-                                            )
-                                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "noun",
-                                            color = TagGreen,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(16.dp))
-
-                                    // Выводим список определений
-                                    state.definitions.forEach { definition ->
-                                        DefinitionItem(text = definition, example = "")
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                    }
-                                }
-                            }
-
-                            TranslatorTab.SYNONYMS -> {
-                                if (state.synonyms.isEmpty()) {
-                                    Text(
-                                        text = "No synonyms found.",
-                                        color = TextLightGray,
-                                        fontSize = 16.sp
-                                    )
-                                } else {
-                                    // Отображаем синонимы красивым списком через запятую или плиткой
-                                    Text(
-                                        text = state.synonyms.joinToString(separator = ", "),
-                                        color = TextDark,
-                                        fontSize = 16.sp,
-                                        lineHeight = 22.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-
-                }
-            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Наш настроенный нижний переключатель языков
+            // Custom bottom language selector
             BottomLanguageSelector { onIntent(TranslatorIntent.SwapLanguages) }
 
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+
+  */
 }
 
 @Composable
@@ -571,7 +618,7 @@ fun DefinitionItem(text: String, example: String) {
 fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
     val panelShape = RoundedCornerShape(32.dp)
 
-    // Кастомная плавная S-образная волна раздела по центру
+    // Custom smooth S-curve section divider
     val customWaveShape = GenericShape { size, _ ->
         val width = size.width
         val height = size.height
@@ -596,14 +643,14 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
             .shadow(8.dp, shape = panelShape)
             .background(Color.White, shape = panelShape)
     ) {
-        // Синий фон для правой части
+        // Blue background for the right side
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(BrandBlue, shape = customWaveShape)
         )
 
-        // Текст языков
+        // Language text
         Row(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
@@ -627,12 +674,12 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
             }
         }
 
-        // Центральная кнопка
+        // Center swap button
         Box(
             modifier = Modifier
                 .padding(end = 10.dp)
                 .align(Alignment.Center)
-                .size(66.dp)
+                .size(40.dp)
                 .shadow(4.dp, shape = CircleShape)
                 .background(Color.White, shape = CircleShape),
             contentAlignment = Alignment.Center
@@ -643,8 +690,8 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_swap),
-                    contentDescription = "Сменить языки",
-                    tint = Color.Unspecified, // Сохраняем цвета стрелок из XML
+                    contentDescription = "Swap languages",
+                    tint = Color.Unspecified, // Keep colors from XML resource
                 )
             }
         }
