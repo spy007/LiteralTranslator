@@ -10,30 +10,30 @@ import com.literaltranslator.R
 
 // Define Google Sans FontFamily
 // Note: You must add google_sans_regular.ttf and google_sans_medium.ttf to res/font
-val GoogleSans = FontFamily(
-    Font(R.font.google_sans_regular, FontWeight.Normal),
-    Font(R.font.google_sans_medium, FontWeight.Medium),
-    Font(R.font.google_sans_bold, FontWeight.Bold)
+val mainFont = FontFamily(
+    Font(R.font.montserrat_regular, FontWeight.Normal),
+    Font(R.font.montserrat_medium, FontWeight.Medium),
+    Font(R.font.montserrat_bold, FontWeight.Bold)
 )
 
 // Set of Material typography styles to start with
 val Typography = Typography(
     bodyLarge = TextStyle(
-        fontFamily = GoogleSans,
+        fontFamily = mainFont,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.5.sp
     ),
     titleLarge = TextStyle(
-        fontFamily = GoogleSans,
+        fontFamily = mainFont,
         fontWeight = FontWeight.Normal,
         fontSize = 22.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = GoogleSans,
+        fontFamily = mainFont,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
         lineHeight = 16.sp,
@@ -41,19 +41,19 @@ val Typography = Typography(
     ),
     // Apply Google Sans to other styles as well
     bodyMedium = TextStyle(
-        fontFamily = GoogleSans,
+        fontFamily = mainFont,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp
     ),
     bodySmall = TextStyle(
-        fontFamily = GoogleSans,
+        fontFamily = mainFont,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp
     ),
     labelLarge = TextStyle(
-        fontFamily = GoogleSans,
+        fontFamily = mainFont,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp

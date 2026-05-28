@@ -30,12 +30,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.literaltranslator.ui.theme.TestAppTheme
-import com.literaltranslator.ui.theme.GoogleSans
+import com.literaltranslator.ui.theme.mainFont
 import androidx.compose.foundation.text.BasicTextField
 
 // Precise color palette from the original design
@@ -46,7 +47,7 @@ val TextDark = Color(0xFF0D1B2A)
 val TextLightGray = Color(0xFF90A4AE)
 val TagGreen = Color(0xFF4CAF50)
 
-class MainActivity: ComponentActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -105,10 +106,12 @@ val TopWaveDesignShape = GenericShape { size, _ ->
 @Preview(showBackground = true)
 @Composable
 fun CustomTranslatorDesignPreview() {
-    TestAppTheme { CustomTranslatorDesign() } }
+    TestAppTheme { CustomTranslatorDesign() }
+}
 
 @Composable
-fun CustomTranslatorDesign() {}
+fun CustomTranslatorDesign() {
+}
 
 @Composable
 fun TranslatorScreen(modifier: Modifier = Modifier) {
@@ -124,6 +127,7 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
     // Listen for effects
     val context = androidx.compose.ui.platform.LocalContext.current
     val ttsManager = remember { TextToSpeechManager(context) }
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
 
     DisposableEffect(Unit) {
         onDispose { ttsManager.shutdown() }
@@ -140,8 +144,21 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
                     ).show()
                 }
 
+                is TranslatorIntent.TranslatorEffect.ShowToastRes -> {
+                    val message = context.getString(effect.resId, *effect.args.toTypedArray())
+                    android.widget.Toast.makeText(
+                        context,
+                        message,
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+
                 is TranslatorIntent.TranslatorEffect.PlaySpeech -> {
                     ttsManager.speak(effect.text, effect.langCode)
+                }
+
+                is TranslatorIntent.TranslatorEffect.CopyToClipboard -> {
+                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(effect.text))
                 }
 
                 TranslatorIntent.TranslatorEffect.TriggerHapticFeedback -> {
@@ -172,7 +189,7 @@ fun TopNavigationBar() {
         IconButton(onClick = {}) {
             Icon(
                 painter = painterResource(id = R.drawable.menu),
-                contentDescription = "Menu",
+                contentDescription = stringResource(R.string.menu_desc),
                 tint = Color.White
             )
         }
@@ -204,7 +221,7 @@ fun TextToTranslateSection(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_sound),
-                                contentDescription = "Source speech",
+                                contentDescription = stringResource(R.string.source_speech_desc),
                                 tint = TextPrimary
                             )
                         }
@@ -212,8 +229,9 @@ fun TextToTranslateSection(
                         Text(
                             text = state.sourceLanguageName,
                             color = TextPrimary,
-                            fontFamily = GoogleSans,
-                            fontSize = 14.sp
+                            fontFamily = mainFont,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                     IconButton(
@@ -222,12 +240,12 @@ fun TextToTranslateSection(
                     ) {
                         Icon(
                             Icons.Default.Clear,
-                            contentDescription = "Clear",
+                            contentDescription = stringResource(R.string.clear_desc),
                             tint = TextLightGray
                         )
                     }
                 }
-
+                Spacer(modifier = Modifier.height(12.dp))
                 // Text input field
                 BasicTextField(
                     value = state.inputText,
@@ -241,18 +259,19 @@ fun TextToTranslateSection(
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = androidx.compose.ui.text.TextStyle(
                         color = TextPrimary,
-                        fontFamily = GoogleSans,
-                        fontSize = 18.sp,
+                        fontFamily = mainFont,
+                        fontSize = 24.sp,
                         lineHeight = 26.sp,
                         fontWeight = FontWeight.Medium
                     ),
                     decorationBox = { innerTextField ->
                         if (state.inputText.isEmpty()) {
                             Text(
-                                text = "Type something...",
-                                fontFamily = GoogleSans,
-                                color = TextPrimary,
-                                fontSize = 24.sp
+                                text = stringResource(R.string.input_hint),
+                                fontFamily = mainFont,
+                                color = TextPrimary.copy(alpha = 0.5f),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                         innerTextField()
@@ -289,14 +308,14 @@ fun TranslationSection(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_sound),
-                            contentDescription = "Target speech"
+                            contentDescription = stringResource(R.string.target_speech_desc)
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = state.targetLanguageName,
                         color = TextPrimary,
-                        fontFamily = GoogleSans,
+                        fontFamily = mainFont,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -304,22 +323,25 @@ fun TranslationSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.Star,
-                        contentDescription = "Favorites",
+                        contentDescription = stringResource(R.string.favorites_desc),
                         tint = Color(0xFFFFB300),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
-                    // Use system icon as placeholder for copy
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_copy),
-                        contentDescription = "Copy",
-                        tint = TextPrimary.copy(alpha = 0.6f),
+                    IconButton(
+                        onClick = { onIntent(TranslatorIntent.CopyTranslation) },
                         modifier = Modifier.size(20.dp)
-                    )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_copy),
+                            contentDescription = stringResource(R.string.copy_desc),
+                            tint = TextPrimary.copy(alpha = 0.6f)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(16.dp))
                     Icon(
                         Icons.Default.MoreVert,
-                        contentDescription = "More",
+                        contentDescription = stringResource(R.string.more_desc),
                         tint = TextPrimary.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -361,9 +383,9 @@ fun TranslationSection(
                         ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.TRANSLATION)) }
                     ) {
                         Text(
-                            text = "Translation",
+                            text = stringResource(R.string.tab_translation),
                             color = if (isTranslationActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
-                            fontFamily = GoogleSans,
+                            fontFamily = mainFont,
                             fontSize = 14.sp,
                             fontWeight = if (isTranslationActive) FontWeight.Bold else FontWeight.Normal
                         )
@@ -385,9 +407,9 @@ fun TranslationSection(
                         ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.DEFINITIONS)) }
                     ) {
                         Text(
-                            text = "Definitions",
+                            text = stringResource(R.string.tab_definitions),
                             color = if (isDefinitionsActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
-                            fontFamily = GoogleSans,
+                            fontFamily = mainFont,
                             fontSize = 14.sp,
                             fontWeight = if (isDefinitionsActive) FontWeight.Bold else FontWeight.Normal
                         )
@@ -409,9 +431,9 @@ fun TranslationSection(
                         ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.SYNONYMS)) }
                     ) {
                         Text(
-                            text = "Synonyms",
+                            text = stringResource(R.string.tab_synonyms),
                             color = if (isSynonymsActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
-                            fontFamily = GoogleSans,
+                            fontFamily = mainFont,
                             fontSize = 14.sp,
                             fontWeight = if (isSynonymsActive) FontWeight.Bold else FontWeight.Normal
                         )
@@ -430,17 +452,18 @@ fun TranslationSection(
                 when (state.activeTab) {
                     TranslatorTab.TRANSLATION -> {
                         Text(
-                            text = state.translatedText.ifBlank { "Translation will appear here..." },
-                            color = if (state.translatedText.isBlank()) TextPrimary else TextPrimary,
-                            fontFamily = GoogleSans,
-                            fontSize = 24.sp
+                            text = state.translatedText.ifBlank { stringResource(R.string.translation_hint) },
+                            color = TextPrimary,
+                            fontFamily = mainFont,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
 
                     TranslatorTab.DEFINITIONS -> {
                         if (state.definitions.isEmpty()) {
                             Text(
-                                text = "No definitions available.",
+                                text = stringResource(R.string.no_definitions),
                                 color = TextPrimary.copy(alpha = 0.6f),
                                 fontSize = 16.sp
                             )
@@ -455,7 +478,7 @@ fun TranslationSection(
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "noun",
+                                    text = stringResource(R.string.tag_noun),
                                     color = TagGreen,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
@@ -475,7 +498,7 @@ fun TranslationSection(
                     TranslatorTab.SYNONYMS -> {
                         if (state.synonyms.isEmpty()) {
                             Text(
-                                text = "No synonyms found.",
+                                text = stringResource(R.string.no_synonyms),
                                 color = TextPrimary.copy(alpha = 0.6f),
                                 fontSize = 16.sp
                             )
@@ -528,75 +551,29 @@ fun TranslatorScreenContent(
             ) { TranslationSection(state, onIntent) }
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 BottomLanguageSelector {}
             }
         }
-        Row(modifier = Modifier
-            .fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
             Box(
                 modifier = Modifier
                     .weight(0.8f)
-                    .height(60.dp)
+                    .height(50.dp)
                     .background(BrandBlue, shape = TopWaveDesignShape)
             ) { TopNavigationBar() }
             Box(
                 modifier = Modifier
                     .weight(0.2f)
-                    .height(60.dp)
+                    .height(50.dp)
             )
         }
     }
-
- /*
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BackgroundGray)
-    ) {
-        // 1. BLUE PANEL WITH STEEP WAVE (Bottom-most layer)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp) // Fixed height for deep drop
-                .background(BrandBlue, shape = HeaderWaveShape)
-        )
-
-        // 2. ALL CONTENT (Layered on top of the blue background, no overlaps)
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-
-            // WINDOW 1: Text Input (English)
-            // Shape exactly matches original design: rounded only at the bottom!
-            val inputCardShape = RoundedCornerShape(
-                topStart = 0.dp,
-                topEnd = 0.dp,
-                bottomStart = 32.dp,
-                bottomEnd = 32.dp
-            )
-
-            // Next is WINDOW 2 (Portuguese, white background)...
-
-
-            // WINDOW 2: Translation (Portuguese, white background)
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Custom bottom language selector
-            BottomLanguageSelector { onIntent(TranslatorIntent.SwapLanguages) }
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-
-  */
 }
 
 @Composable
@@ -612,7 +589,7 @@ fun DefinitionItem(text: String, example: String) {
             Text(
                 text = text,
                 color = TextPrimary,
-                fontFamily = GoogleSans,
+                fontFamily = mainFont,
                 fontSize = 15.sp,
                 lineHeight = 20.sp,
                 fontWeight = FontWeight.Medium
@@ -621,7 +598,7 @@ fun DefinitionItem(text: String, example: String) {
             Text(
                 text = example,
                 color = TextPrimary.copy(alpha = 0.6f),
-                fontFamily = GoogleSans,
+                fontFamily = mainFont,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
             )
@@ -631,7 +608,8 @@ fun DefinitionItem(text: String, example: String) {
 
 @Composable
 fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
-    val panelShape = RoundedCornerShape(32.dp)
+    val corner = 50
+    val panelShape =  RoundedCornerShape(corner, corner, 0, 0)
 
     // Custom smooth S-curve section divider
     val customWaveShape = GenericShape { size, _ ->
@@ -672,9 +650,9 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
         ) {
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "English",
+                    text = stringResource(R.string.english),
                     color = TextDark,
-                    fontFamily = GoogleSans,
+                    fontFamily = mainFont,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -682,9 +660,9 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
             Spacer(modifier = Modifier.width(48.dp))
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Portuguese",
+                    text = stringResource(R.string.portuguese),
                     color = Color.White,
-                    fontFamily = GoogleSans,
+                    fontFamily = mainFont,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -707,7 +685,7 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_swap),
-                    contentDescription = "Swap languages",
+                    contentDescription = stringResource(R.string.swap_languages_desc),
                     tint = Color.Unspecified, // Keep colors from XML resource
                 )
             }

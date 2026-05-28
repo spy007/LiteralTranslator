@@ -84,6 +84,15 @@ class TranslatorViewModel(
                     viewModelScope.launch { _effect.emit(TranslatorIntent.TranslatorEffect.PlaySpeech(text, lang)) }
                 }
             }
+            TranslatorIntent.CopyTranslation -> {
+                val text = _viewState.value.translatedText
+                if (text.isNotBlank()) {
+                    viewModelScope.launch {
+                        _effect.emit(TranslatorIntent.TranslatorEffect.CopyToClipboard(text))
+                        _effect.emit(TranslatorIntent.TranslatorEffect.ShowToastRes(R.string.copied_to_clipboard))
+                    }
+                }
+            }
         }
     }
 
@@ -115,24 +124,8 @@ class TranslatorViewModel(
                 }
             }.onFailure { exception ->
                 _viewState.update { it.copy(isLoading = false, error = exception.localizedMessage) }
-                _effect.emit(TranslatorIntent.TranslatorEffect.ShowToast("Ошибка: ${exception.localizedMessage}"))
+                _effect.emit(TranslatorIntent.TranslatorEffect.ShowToastRes(R.string.error_prefix, listOf(exception.localizedMessage ?: "Unknown")))
             }
-        }
-    }
-
-    // Модифицируем метод успешного перевода, чтобы он сразу генерировал и синонимы для теста
-    // (В реальном приложении эти данные берутся из Dictionary API)
-    private fun mockSuccessData(translationResult: String) {
-        _viewState.update {
-            it.copy(
-                translatedText = translationResult,
-                definitions = listOf(
-                    "a feeling of expectation and desire for a certain thing to happen.",
-                    "a feeling of trust."
-                ),
-                synonyms = listOf("aspiration", "desire", "wish", "expectation", "faith"),
-                isLoading = false
-            )
         }
     }
 }

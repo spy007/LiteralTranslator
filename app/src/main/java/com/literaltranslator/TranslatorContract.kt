@@ -35,11 +35,15 @@ sealed interface TranslatorIntent {
     // ИНТЕНТ ДЛЯ КЛИКА ПО ВКЛАДКЕ
     data class SelectTab(val tab: TranslatorTab) : TranslatorIntent
 
+    data object CopyTranslation : TranslatorIntent
+
     // Side Effects: one-time events (Toast, navigation, ...)
     sealed interface TranslatorEffect {
         data class ShowToast(val message: String) : TranslatorEffect
+        data class ShowToastRes(val resId: Int, val args: List<Any> = emptyList()) : TranslatorEffect
         data object TriggerHapticFeedback : TranslatorEffect
         // Внутри sealed interface TranslatorEffect добавим:
         data class PlaySpeech(val text: String, val langCode: String) : TranslatorEffect
+        data class CopyToClipboard(val text: String) : TranslatorEffect
     }
 }
