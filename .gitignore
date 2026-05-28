@@ -14,9 +14,15 @@
 .cxx
 local.properties
 
+# Android Studio / IntelliJ
+.idea/
+!.idea/runConfigurations/
+!.idea/copyright/
+!.idea/scopes/
 /.idea/*.xml
 /.idea/inspectionProfiles/Project_Default.xml
 !/.idea/scopes/
+!.idea/codeStyles/
 
 Thumbs.db
 
