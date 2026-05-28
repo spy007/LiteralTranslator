@@ -35,11 +35,13 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.literaltranslator.ui.theme.TestAppTheme
+import com.literaltranslator.ui.theme.GoogleSans
 import androidx.compose.foundation.text.BasicTextField
 
 // Precise color palette from the original design
 val BrandBlue = Color(0xFF2962FF)
 val BackgroundGray = Color(0xFFF4F6F9)   // Light background for the application
+val TextPrimary = Color(0xFF3F414E)      // Deep slate blue from the design image
 val TextDark = Color(0xFF0D1B2A)
 val TextLightGray = Color(0xFF90A4AE)
 val TagGreen = Color(0xFF4CAF50)
@@ -93,8 +95,8 @@ val TopWaveDesignShape = GenericShape { size, _ ->
     lineTo(w * 0.3f, h)
     // Left arc (convex)
     cubicTo(
-        w * 0.15f, h,
-        0f, h + curveH * 0.5f,
+        w * 0.1f, h,
+        0f, h + curveH * 0.15f,
         0f, h + curveH
     )
     close()
@@ -203,13 +205,14 @@ fun TextToTranslateSection(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_sound),
                                 contentDescription = "Source speech",
-                                tint = TextDark
+                                tint = TextPrimary
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = state.sourceLanguageName,
-                            color = TextLightGray,
+                            color = TextPrimary,
+                            fontFamily = GoogleSans,
                             fontSize = 14.sp
                         )
                     }
@@ -237,7 +240,8 @@ fun TextToTranslateSection(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = androidx.compose.ui.text.TextStyle(
-                        color = TextDark,
+                        color = TextPrimary,
+                        fontFamily = GoogleSans,
                         fontSize = 18.sp,
                         lineHeight = 26.sp,
                         fontWeight = FontWeight.Medium
@@ -246,8 +250,9 @@ fun TextToTranslateSection(
                         if (state.inputText.isEmpty()) {
                             Text(
                                 text = "Type something...",
-                                color = TextLightGray,
-                                fontSize = 18.sp
+                                fontFamily = GoogleSans,
+                                color = TextPrimary,
+                                fontSize = 24.sp
                             )
                         }
                         innerTextField()
@@ -284,14 +289,14 @@ fun TranslationSection(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_sound),
-                            contentDescription = "Target speech",
-                            tint = BrandBlue
+                            contentDescription = "Target speech"
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = state.targetLanguageName,
-                        color = TextDark,
+                        color = TextPrimary,
+                        fontFamily = GoogleSans,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -308,14 +313,14 @@ fun TranslationSection(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_copy),
                         contentDescription = "Copy",
-                        tint = TextLightGray,
+                        tint = TextPrimary.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Icon(
                         Icons.Default.MoreVert,
                         contentDescription = "More",
-                        tint = TextLightGray,
+                        tint = TextPrimary.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -357,7 +362,8 @@ fun TranslationSection(
                     ) {
                         Text(
                             text = "Translation",
-                            color = if (isTranslationActive) BrandBlue else TextLightGray,
+                            color = if (isTranslationActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
+                            fontFamily = GoogleSans,
                             fontSize = 14.sp,
                             fontWeight = if (isTranslationActive) FontWeight.Bold else FontWeight.Normal
                         )
@@ -380,7 +386,8 @@ fun TranslationSection(
                     ) {
                         Text(
                             text = "Definitions",
-                            color = if (isDefinitionsActive) BrandBlue else TextLightGray,
+                            color = if (isDefinitionsActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
+                            fontFamily = GoogleSans,
                             fontSize = 14.sp,
                             fontWeight = if (isDefinitionsActive) FontWeight.Bold else FontWeight.Normal
                         )
@@ -403,7 +410,8 @@ fun TranslationSection(
                     ) {
                         Text(
                             text = "Synonyms",
-                            color = if (isSynonymsActive) BrandBlue else TextLightGray,
+                            color = if (isSynonymsActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
+                            fontFamily = GoogleSans,
                             fontSize = 14.sp,
                             fontWeight = if (isSynonymsActive) FontWeight.Bold else FontWeight.Normal
                         )
@@ -416,16 +424,16 @@ fun TranslationSection(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // 2. DYNAMIC CONTENT BASED ON SELECTED TAB
                 when (state.activeTab) {
                     TranslatorTab.TRANSLATION -> {
                         Text(
                             text = state.translatedText.ifBlank { "Translation will appear here..." },
-                            color = if (state.translatedText.isBlank()) TextLightGray else TextDark,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.SemiBold
+                            color = if (state.translatedText.isBlank()) TextPrimary else TextPrimary,
+                            fontFamily = GoogleSans,
+                            fontSize = 24.sp
                         )
                     }
 
@@ -433,7 +441,7 @@ fun TranslationSection(
                         if (state.definitions.isEmpty()) {
                             Text(
                                 text = "No definitions available.",
-                                color = TextLightGray,
+                                color = TextPrimary.copy(alpha = 0.6f),
                                 fontSize = 16.sp
                             )
                         } else {
@@ -468,14 +476,14 @@ fun TranslationSection(
                         if (state.synonyms.isEmpty()) {
                             Text(
                                 text = "No synonyms found.",
-                                color = TextLightGray,
+                                color = TextPrimary.copy(alpha = 0.6f),
                                 fontSize = 16.sp
                             )
                         } else {
                             // Render synonyms as a comma-separated list
                             Text(
                                 text = state.synonyms.joinToString(separator = ", "),
-                                color = TextDark,
+                                color = TextPrimary,
                                 fontSize = 16.sp,
                                 lineHeight = 22.sp,
                                 fontWeight = FontWeight.Medium
@@ -603,13 +611,20 @@ fun DefinitionItem(text: String, example: String) {
         Column {
             Text(
                 text = text,
-                color = TextDark,
+                color = TextPrimary,
+                fontFamily = GoogleSans,
                 fontSize = 15.sp,
                 lineHeight = 20.sp,
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = example, color = TextLightGray, fontSize = 13.sp, lineHeight = 18.sp)
+            Text(
+                text = example,
+                color = TextPrimary.copy(alpha = 0.6f),
+                fontFamily = GoogleSans,
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            )
         }
     }
 }
@@ -659,6 +674,7 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
                 Text(
                     text = "English",
                     color = TextDark,
+                    fontFamily = GoogleSans,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -668,6 +684,7 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
                 Text(
                     text = "Portuguese",
                     color = Color.White,
+                    fontFamily = GoogleSans,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
