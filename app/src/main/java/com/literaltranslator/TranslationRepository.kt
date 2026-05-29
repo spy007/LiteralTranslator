@@ -10,4 +10,6 @@ interface TranslationRepository {
         sourceLangCode: String,
         targetLangCode: String
     ): Result<String>
+
+    suspend fun getAvailableLanguages(): Result<List<LanguageModel>>
 }

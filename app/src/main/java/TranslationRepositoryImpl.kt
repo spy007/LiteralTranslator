@@ -1,9 +1,12 @@
 // TranslationRepositoryImpl.kt
 
 import com.google.mlkit.common.model.DownloadConditions
+import com.google.mlkit.nl.translate.TranslateLanguage // Добавляем этот импорт
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.TranslatorOptions
 import com.literaltranslator.TranslationRepository
+import com.literaltranslator.LanguageModel
+import com.literaltranslator.utils.getLanguageName
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +19,6 @@ class TranslationRepositoryImpl : TranslationRepository {
         targetLangCode: String
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
-            // 1. Конфигурируем опции переводчика на основе кодов языков (например, "en", "pt")
             val options = TranslatorOptions.Builder()
                 .setSourceLanguage(sourceLangCode)
                 .setTargetLanguage(targetLangCode)
@@ -24,21 +26,29 @@ class TranslationRepositoryImpl : TranslationRepository {
 
             val client = Translation.getClient(options)
 
-            // 2. Задаем условия для скачивания языкового пакета (требуем только Wi-Fi для экономии трафика)
             val conditions = DownloadConditions.Builder()
                 .requireWifi()
                 .build()
 
-            // 3. Скачиваем пакеты, если они не были скачаны ранее
             client.downloadModelIfNeeded(conditions).await()
 
-            // 4. Выполняем перевод
             val translatedResult = client.translate(text).await()
-            
-            // Обязательно закрываем клиент для предотвращения утечек памяти
+
             client.close()
 
             Result.success(translatedResult)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Реализация нового метода
+    override suspend fun getAvailableLanguages(): Result<List<LanguageModel>> = withContext(Dispatchers.IO) {
+        try {
+            val languagesList = TranslateLanguage.getAllLanguages().toList().map { code ->
+                LanguageModel(code, getLanguageName(code))
+            }
+            Result.success(languagesList)
         } catch (e: Exception) {
             Result.failure(e)
         }

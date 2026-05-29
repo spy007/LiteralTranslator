@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TestAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding: PaddingValues ->
                     TranslatorScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
@@ -76,29 +76,36 @@ fun TranslatorScreenPreview() {
     )
 }
 
-// Refined shapes for CustomTranslatorDesign with "S-curve" transitions
-// Top wave (Blue): Horizontal line with arcs at both ends
+// Refined shapes for CustomTranslatorDesign matching the 50dp corner radius
 val TopWaveDesignShape = GenericShape { size, _ ->
     val w = size.width
     val h = size.height
-    val curveH = w * 0.15f // Height of the curve transition
+    // Use a fixed radius matching the 'corner = 50' used in the bottom bar
+    // Note: We use 50f here as a density-independent-like value for the shape
+    val r = 150f
 
     moveTo(0f, 0f)
     lineTo(w, 0f)
-    lineTo(w, h - curveH)
-    // Right arc (concave)
+    lineTo(w, h - r)
+    
+    // Right arc (concave) - matches RoundedCornerShape(50)
+    // Using a circular-like arc approximation with cubicTo
+    // kappa = 4/3 * (sqrt(2) - 1) / 1 ≈ 0.55228
+    val k = 0.55228f
     cubicTo(
-        w, h - curveH * 0.3f,
-        w * 0.85f, h,
-        w * 0.7f, h
+        w, h - r * (1 - k),
+        w - r * (1 - k), h,
+        w - r, h
     )
-    // Horizontal line
-    lineTo(w * 0.3f, h)
-    // Left arc (convex)
+    
+    // Bottom line
+    lineTo(r, h)
+    
+    // Left arc (convex) - matching the other side
     cubicTo(
-        w * 0.1f, h,
-        0f, h + curveH * 0.15f,
-        0f, h + curveH
+        r * (1 - k), h,
+        0f, h + r * (1 - k),
+        0f, h + r
     )
     close()
 }
@@ -136,7 +143,7 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
     androidx.compose.runtime.LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is TranslatorIntent.TranslatorEffect.ShowToast -> {
+                is TranslatorEffect.ShowToast -> {
                     android.widget.Toast.makeText(
                         context,
                         effect.message,
@@ -144,7 +151,7 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
                     ).show()
                 }
 
-                is TranslatorIntent.TranslatorEffect.ShowToastRes -> {
+                is TranslatorEffect.ShowToastRes -> {
                     val message = context.getString(effect.resId, *effect.args.toTypedArray())
                     android.widget.Toast.makeText(
                         context,
@@ -153,15 +160,15 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
                     ).show()
                 }
 
-                is TranslatorIntent.TranslatorEffect.PlaySpeech -> {
+                is TranslatorEffect.PlaySpeech -> {
                     ttsManager.speak(effect.text, effect.langCode)
                 }
 
-                is TranslatorIntent.TranslatorEffect.CopyToClipboard -> {
+                is TranslatorEffect.CopyToClipboard -> {
                     clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(effect.text))
                 }
 
-                TranslatorIntent.TranslatorEffect.TriggerHapticFeedback -> {
+                TranslatorEffect.TriggerHapticFeedback -> {
                     // Vibration call code
                 }
                 // FIXED: Duplicate branch for TriggerHapticFeedback removed
@@ -554,7 +561,10 @@ fun TranslatorScreenContent(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                BottomLanguageSelector {}
+                BottomLanguageSelector(
+                    state = state,
+                    onIntent = onIntent
+                )
             }
         }
         Row(
@@ -607,9 +617,12 @@ fun DefinitionItem(text: String, example: String) {
 }
 
 @Composable
-fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
+fun BottomLanguageSelector(
+    state: TranslatorState,
+    onIntent: (TranslatorIntent) -> Unit
+) {
     val corner = 50
-    val panelShape =  RoundedCornerShape(corner, corner, 0, 0)
+    val panelShape = RoundedCornerShape(corner, corner, 0, 0)
 
     // Custom smooth S-curve section divider
     val customWaveShape = GenericShape { size, _ ->
@@ -648,9 +661,15 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable { onIntent(TranslatorIntent.ClickSourceLanguage) },
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = stringResource(R.string.english),
+                    text = state.sourceLanguageName,
                     color = TextDark,
                     fontFamily = mainFont,
                     fontSize = 16.sp,
@@ -658,9 +677,15 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
                 )
             }
             Spacer(modifier = Modifier.width(48.dp))
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable { onIntent(TranslatorIntent.ClickTargetLanguage) },
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = stringResource(R.string.portuguese),
+                    text = state.targetLanguageName,
                     color = Color.White,
                     fontFamily = mainFont,
                     fontSize = 16.sp,
@@ -680,7 +705,7 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             IconButton(
-                onClick = onSwapLanguagesClick,
+                onClick = { onIntent(TranslatorIntent.SwapLanguages) },
                 modifier = Modifier.fillMaxSize()
             ) {
                 Icon(
@@ -690,5 +715,21 @@ fun BottomLanguageSelector(onSwapLanguagesClick: () -> Unit) {
                 )
             }
         }
+    }
+
+    if (state.isSelectingSourceLang) {
+        LanguageSelectionSheet(
+            languages = state.availableLanguages,
+            onLanguageSelected = { onIntent(TranslatorIntent.SelectSourceLanguage(it)) },
+            onDismiss = { onIntent(TranslatorIntent.DismissLanguageSelection) }
+        )
+    }
+
+    if (state.isSelectingTargetLang) {
+        LanguageSelectionSheet(
+            languages = state.availableLanguages,
+            onLanguageSelected = { onIntent(TranslatorIntent.SelectTargetLanguage(it)) },
+            onDismiss = { onIntent(TranslatorIntent.DismissLanguageSelection) }
+        )
     }
 }
