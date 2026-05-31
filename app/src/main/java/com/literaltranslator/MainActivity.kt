@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -62,7 +61,6 @@ val BackgroundGray = Color(0xFFF4F6F9)   // Light background for the application
 val TextPrimary = Color(0xFF3F414E)      // Deep slate blue from the design image
 val TextDark = Color(0xFF0D1B2A)
 val TextLightGray = Color(0xFF90A4AE)
-val TagGreen = Color(0xFF4CAF50)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -524,152 +522,13 @@ fun TranslationSection(
 
 // Inside WINDOW 2 (Portuguese), content block ( isLoading == false ):
             } else {
-                // 1. Tab switcher with dynamic highlights and clicks
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // TRANSLATION Tab
-                    val isTranslationActive = state.activeTab == TranslatorTab.TRANSLATION
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null // Remove gray box on click
-                        ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.TRANSLATION)) }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.tab_translation),
-                            color = if (isTranslationActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
-                            fontFamily = mainFont,
-                            fontSize = 14.sp,
-                            fontWeight = if (isTranslationActive) FontWeight.Bold else FontWeight.Normal
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(width = 50.dp, height = 2.dp)
-                                .background(if (isTranslationActive) BrandBlue else Color.Transparent)
-                        )
-                    }
-
-                    // DEFINITIONS Tab
-                    val isDefinitionsActive = state.activeTab == TranslatorTab.DEFINITIONS
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.DEFINITIONS)) }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.tab_definitions),
-                            color = if (isDefinitionsActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
-                            fontFamily = mainFont,
-                            fontSize = 14.sp,
-                            fontWeight = if (isDefinitionsActive) FontWeight.Bold else FontWeight.Normal
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(width = 50.dp, height = 2.dp)
-                                .background(if (isDefinitionsActive) BrandBlue else Color.Transparent)
-                        )
-                    }
-
-                    // SYNONYMS Tab
-                    val isSynonymsActive = state.activeTab == TranslatorTab.SYNONYMS
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onIntent(TranslatorIntent.SelectTab(TranslatorTab.SYNONYMS)) }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.tab_synonyms),
-                            color = if (isSynonymsActive) BrandBlue else TextPrimary.copy(alpha = 0.6f),
-                            fontFamily = mainFont,
-                            fontSize = 14.sp,
-                            fontWeight = if (isSynonymsActive) FontWeight.Bold else FontWeight.Normal
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(width = 50.dp, height = 2.dp)
-                                .background(if (isSynonymsActive) BrandBlue else Color.Transparent)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 2. DYNAMIC CONTENT BASED ON SELECTED TAB
-                when (state.activeTab) {
-                    TranslatorTab.TRANSLATION -> {
-                        Text(
-                            text = state.translatedText.ifBlank { stringResource(R.string.translation_hint) },
-                            color = TextPrimary.copy(0.5f),
-                            fontFamily = mainFont,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    TranslatorTab.DEFINITIONS -> {
-                        if (state.definitions.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.no_definitions),
-                                color = TextPrimary.copy(alpha = 0.6f),
-                                fontSize = 16.sp
-                            )
-                        } else {
-                            // Green "noun" tag from original design
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        TagGreen.copy(alpha = 0.15f),
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.tag_noun),
-                                    color = TagGreen,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Render definitions list
-                            state.definitions.forEach { definition ->
-                                DefinitionItem(text = definition, example = "")
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
-                        }
-                    }
-
-                    TranslatorTab.SYNONYMS -> {
-                        if (state.synonyms.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.no_synonyms),
-                                color = TextPrimary.copy(alpha = 0.6f),
-                                fontSize = 16.sp
-                            )
-                        } else {
-                            // Render synonyms as a comma-separated list
-                            Text(
-                                text = state.synonyms.joinToString(separator = ", "),
-                                color = TextPrimary,
-                                fontSize = 16.sp,
-                                lineHeight = 22.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
+                Text(
+                    text = state.translatedText.ifBlank { stringResource(R.string.translation_hint) },
+                    color = TextPrimary.copy(0.5f),
+                    fontFamily = mainFont,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -730,36 +589,6 @@ fun TranslatorScreenContent(
                 modifier = Modifier
                     .weight(0.2f)
                     .height(50.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun DefinitionItem(text: String, example: String) {
-    Row(modifier = Modifier.padding(vertical = 4.dp)) {
-        Box(
-            modifier = Modifier
-                .padding(top = 6.dp, end = 8.dp)
-                .size(6.dp)
-                .background(TagGreen, shape = CircleShape)
-        )
-        Column {
-            Text(
-                text = text,
-                color = TextPrimary,
-                fontFamily = mainFont,
-                fontSize = 15.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = example,
-                color = TextPrimary.copy(alpha = 0.6f),
-                fontFamily = mainFont,
-                fontSize = 13.sp,
-                lineHeight = 18.sp
             )
         }
     }

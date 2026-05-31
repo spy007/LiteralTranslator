@@ -107,12 +107,8 @@ class TranslatorViewModel(
             TranslatorIntent.ClearText -> {
                 _inputTextFlow.value = ""
                 _viewState.update {
-                    it.copy(inputText = "", translatedText = "", definitions = emptyList(), selectedWordRange = null)
+                    it.copy(inputText = "", translatedText = "", selectedWordRange = null)
                 }
-            }
-
-            is TranslatorIntent.SelectTab -> {
-                _viewState.update { it.copy(activeTab = intent.tab) }
             }
 
             TranslatorIntent.SpeakSourceText -> {
@@ -245,10 +241,6 @@ class TranslatorViewModel(
                 _viewState.update {
                     it.copy(
                         translatedText = translationResult,
-                        definitions = listOf(
-                            "a feeling of expectation and desire for a certain thing to happen.",
-                            "a feeling of trust."
-                        ),
                         isLoading = false
                     )
                 }

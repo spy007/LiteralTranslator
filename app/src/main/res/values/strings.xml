@@ -9,12 +9,7 @@
     <string name="copy_desc">Copy</string>
     <string name="more_desc">More</string>
     <string name="tab_translation">Translation</string>
-    <string name="tab_definitions">Definitions</string>
-    <string name="tab_synonyms">Synonyms</string>
     <string name="translation_hint">Translation will appear here…</string>
-    <string name="no_definitions">No definitions available.</string>
-    <string name="tag_noun">noun</string>
-    <string name="no_synonyms">No synonyms found.</string>
     <string name="english">English</string>
     <string name="portuguese">Portuguese</string>
     <string name="swap_languages_desc">Swap languages</string>

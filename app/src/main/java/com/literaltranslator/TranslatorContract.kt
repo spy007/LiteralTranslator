@@ -1,10 +1,5 @@
 package com.literaltranslator
 
-// Новое перечисление для вкладок
-enum class TranslatorTab {
-    TRANSLATION, DEFINITIONS, SYNONYMS
-}
-
 data class LanguageModel(
     val code: String,
     val name: String
@@ -14,8 +9,6 @@ data class LanguageModel(
 data class TranslatorState(
     val inputText: String = "",
     val translatedText: String = "",
-    val definitions: List<String> = emptyList(),
-    val synonyms: List<String> = emptyList(), // Добавили синонимы для полноты картины
     val sourceLanguageName: String = "English",
     val targetLanguageName: String = "Portuguese",
     val sourceLangCode: String = "en", // Дефолт, который перезапишется при старте
@@ -23,9 +16,6 @@ data class TranslatorState(
     val isLoading: Boolean = false,
     val error: String? = null,
     
-    // ТЕКУЩАЯ АКТИВНАЯ ВКЛАДКА (по умолчанию открыта Translation)
-    val activeTab: TranslatorTab = TranslatorTab.TRANSLATION,
-
     val isSelectingSourceLang: Boolean = false,
     val isSelectingTargetLang: Boolean = false,
     val availableLanguages: List<LanguageModel> = emptyList(),
@@ -44,9 +34,6 @@ sealed interface TranslatorIntent {
     // Внутри sealed interface TranslatorIntent добавим:
     data object SpeakSourceText : TranslatorIntent
     data object SpeakTargetText : TranslatorIntent
-
-    // ИНТЕНТ ДЛЯ КЛИКА ПО ВКЛАДКЕ
-    data class SelectTab(val tab: TranslatorTab) : TranslatorIntent
 
     data object CopyTranslation : TranslatorIntent
 
