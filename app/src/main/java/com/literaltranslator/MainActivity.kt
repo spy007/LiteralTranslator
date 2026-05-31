@@ -57,9 +57,8 @@ import kotlin.math.roundToInt
 
 // Precise color palette from the original design
 val BrandBlue = Color(0xFF2962FF)
-val BackgroundGray = Color(0xFFF4F6F9)   // Light background for the application
+val BackgroundGray = Color(0xFFECEFF1)   // Darker gray for better contrast
 val TextPrimary = Color(0xFF3F414E)      // Deep slate blue from the design image
-val TextDark = Color(0xFF0D1B2A)
 val TextLightGray = Color(0xFF90A4AE)
 
 class MainActivity : ComponentActivity() {
@@ -202,19 +201,32 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun TopNavigationBar() {
-    Row(
+    Box(
         modifier = Modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth()
+            .height(50.dp)
     ) {
-        IconButton(onClick = {}) {
+        IconButton(
+            onClick = {},
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 4.dp)
+        ) {
             Icon(
                 painter = painterResource(id = R.drawable.menu),
                 contentDescription = stringResource(R.string.menu_desc),
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.size(32.dp)
             )
         }
+        Text(
+            text = "Literal Translator",
+            color = Color.White,
+            fontFamily = mainFont,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Center)
+        )
     }
 }
 
@@ -336,8 +348,8 @@ fun TextToTranslateSection(
                         color = TextPrimary,
                         fontFamily = mainFont,
                         fontSize = 24.sp,
-                        lineHeight = 26.sp,
-                        fontWeight = FontWeight.Medium
+                        lineHeight = 36.sp,
+                        fontWeight = FontWeight.Normal
                     ),
                     decorationBox = { innerTextField ->
                         Box(
@@ -524,9 +536,10 @@ fun TranslationSection(
             } else {
                 Text(
                     text = state.translatedText.ifBlank { stringResource(R.string.translation_hint) },
-                    color = TextPrimary.copy(0.5f),
+                    color = TextPrimary.copy(alpha = 0.5f),
                     fontFamily = mainFont,
                     fontSize = 24.sp,
+                    lineHeight = 36.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -564,16 +577,10 @@ fun TranslatorScreenContent(
                     .fillMaxWidth()
                     .weight(0.4f)
             ) { TranslationSection(state, onIntent) }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                BottomLanguageSelector(
-                    state = state,
-                    onIntent = onIntent
-                )
-            }
+            BottomLanguageSelector(
+                state = state,
+                onIntent = onIntent
+            )
         }
         Row(
             modifier = Modifier
@@ -600,7 +607,7 @@ fun BottomLanguageSelector(
     onIntent: (TranslatorIntent) -> Unit
 ) {
     val corner = 50
-    val panelShape = RoundedCornerShape(corner, corner, 0, 0)
+    val panelShape = RoundedCornerShape(topStart = corner.dp, topEnd = corner.dp)
 
     // Custom smooth S-curve section divider
     val customWaveShape = GenericShape { size, _ ->
@@ -648,7 +655,7 @@ fun BottomLanguageSelector(
             ) {
                 Text(
                     text = state.sourceLanguageName,
-                    color = TextDark,
+                    color = TextPrimary,
                     fontFamily = mainFont,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
