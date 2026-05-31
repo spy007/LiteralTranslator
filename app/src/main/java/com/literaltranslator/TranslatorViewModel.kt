@@ -69,14 +69,13 @@ class TranslatorViewModel(
         when (intent) {
             is TranslatorIntent.ChangeInputText -> {
                 // И мгновенно обновляем текст в UI (чтобы буквы появлялись без задержек)
-                _viewState.update { it.copy(inputText = intent.text) }
+                _viewState.update { it.copy(inputText = intent.text, selectedWordRange = null) }
                 // И отправляем текст в поток автоперевода
                 _inputTextFlow.value = intent.text
             }
 
             TranslatorIntent.SetSourceLanguage -> {
                 val sourceLanguageName = Locale(Locale.getDefault().language).getDisplayName(Locale.getDefault())
-                val targetLanguageName =
                 _viewState.update {
                     it.copy(
                         sourceLanguageName = sourceLanguageName,
@@ -96,7 +95,8 @@ class TranslatorViewModel(
                         sourceLanguageName = currentState.targetLanguageName,
                         targetLanguageName = currentState.sourceLanguageName,
                         inputText = currentState.translatedText,
-                        translatedText = currentState.inputText
+                        translatedText = currentState.inputText,
+                        selectedWordRange = null
                     ).also { triggerTranslation() }
                 }
                 viewModelScope.launch {
@@ -107,7 +107,7 @@ class TranslatorViewModel(
             TranslatorIntent.ClearText -> {
                 _inputTextFlow.value = ""
                 _viewState.update {
-                    it.copy(inputText = "", translatedText = "", definitions = emptyList())
+                    it.copy(inputText = "", translatedText = "", definitions = emptyList(), selectedWordRange = null)
                 }
             }
 
@@ -184,12 +184,45 @@ class TranslatorViewModel(
                 _viewState.update {
                     it.copy(
                         sourceLanguageName = it.targetLanguageName,
-                        targetLanguageName = it.sourceLanguageName
+                        targetLanguageName = it.sourceLanguageName,
+                        selectedWordRange = null
                     )
                 }
                 triggerTranslation()
             }
 
+            is TranslatorIntent.SelectWord -> {
+                val range = intent.range
+                if (range != null && range.first in _viewState.value.inputText.indices) {
+                    val word = _viewState.value.inputText.substring(range)
+                    _viewState.update {
+                        it.copy(
+                            selectedWordRange = range,
+                            selectedWord = word
+                        )
+                    }
+                    triggerWordTranslation(word)
+                } else {
+                    _viewState.update { it.copy(selectedWordRange = null) }
+                }
+            }
+        }
+    }
+
+    private fun triggerWordTranslation(word: String) {
+        if (word.isBlank()) return
+        val currentState = _viewState.value
+
+        viewModelScope.launch {
+            val result = repository.translateText(
+                text = word,
+                sourceLangCode = currentState.sourceLangCode,
+                targetLangCode = currentState.targetLangCode
+            )
+
+            result.onSuccess { translation ->
+                _viewState.update { it.copy(selectedWordTranslation = translation) }
+            }
         }
     }
 

@@ -26,10 +26,12 @@ data class TranslatorState(
     // ТЕКУЩАЯ АКТИВНАЯ ВКЛАДКА (по умолчанию открыта Translation)
     val activeTab: TranslatorTab = TranslatorTab.TRANSLATION,
 
-    // Флаги для открытия окон выбора
     val isSelectingSourceLang: Boolean = false,
     val isSelectingTargetLang: Boolean = false,
     val availableLanguages: List<LanguageModel> = emptyList(),
+    val selectedWordRange: IntRange? = null,
+    val selectedWord: String = "",
+    val selectedWordTranslation: String = "",
 )
 
 // Обновленный интерфейс интентов
@@ -59,6 +61,8 @@ sealed interface TranslatorIntent {
     object DismissLanguageSelection : TranslatorIntent
 
     object SwitchLanguages : TranslatorIntent
+
+    data class SelectWord(val range: IntRange?) : TranslatorIntent
 }
 
 
