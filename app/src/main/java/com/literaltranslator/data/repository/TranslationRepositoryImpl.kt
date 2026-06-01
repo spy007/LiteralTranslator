@@ -1,11 +1,11 @@
-// TranslationRepositoryImpl.kt
+package com.literaltranslator.data.repository
 
 import com.google.mlkit.common.model.DownloadConditions
-import com.google.mlkit.nl.translate.TranslateLanguage // Добавляем этот импорт
+import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.TranslatorOptions
-import com.literaltranslator.TranslationRepository
-import com.literaltranslator.LanguageModel
+import com.literaltranslator.domain.repository.TranslationRepository
+import com.literaltranslator.domain.model.LanguageModel
 import com.literaltranslator.utils.getLanguageName
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -42,7 +42,6 @@ class TranslationRepositoryImpl : TranslationRepository {
         }
     }
 
-    // Реализация нового метода
     override suspend fun getAvailableLanguages(): Result<List<LanguageModel>> = withContext(Dispatchers.IO) {
         try {
             val languagesList = TranslateLanguage.getAllLanguages().toList().map { code ->

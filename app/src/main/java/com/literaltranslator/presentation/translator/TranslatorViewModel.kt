@@ -1,14 +1,16 @@
-package com.literaltranslator
+package com.literaltranslator.presentation.translator
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.literaltranslator.domain.repository.TranslationRepository
 import com.literaltranslator.utils.getLanguageName
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Locale
+import com.literaltranslator.R
 
-@OptIn(FlowPreview::class) // Требуется для использования оператора debounce
+@OptIn(FlowPreview::class) // Required for debounce operator
 class TranslatorViewModel(
     private val repository: TranslationRepository
 ) : ViewModel() {
@@ -19,28 +21,28 @@ class TranslatorViewModel(
     private val _effect = MutableSharedFlow<TranslatorEffect>()
     val effect: SharedFlow<TranslatorEffect> = _effect.asSharedFlow()
 
-    // Специальный поток для отслеживания изменений ввода текста пользователем
+    // Special stream to track user input changes
     private val _inputTextFlow = MutableStateFlow("")
 
     init {
-        // Запускаем реактивное прослушивание ввода текста
+        // Start reactive listening for text input
         _inputTextFlow
-            .debounce(600) // Ждем 600 мс после окончания ввода текста пользователем
-            .filter { text -> text.isNotBlank() } // Игнорируем пустые строки
-            .distinctUntilChanged() // Не переводим повторно, если текст не изменился
+            .debounce(600) // Wait 600 ms after the user finishes typing
+            .filter { text -> text.isNotBlank() } // Ignore empty strings
+            .distinctUntilChanged() // Do not re-translate if the text hasn't changed
             .onEach {
-                triggerTranslation() // Запускаем перевод автоматически!
+                triggerTranslation() // Trigger translation automatically!
             }
             .launchIn(viewModelScope)
 
-        // Инициализируем языки при создании ViewModel
+        // Initialize languages when creating ViewModel
         initializeDefaultLanguages()
-        // Сразу фоном загружаем поддерживаемые языки из ML Kit
+        // Immediately load supported languages from ML Kit in the background
         loadAvailableLanguages()
     }
 
     private fun initializeDefaultLanguages() {
-        // Получаем системный язык телефона (например, "ru", "en", "pt")
+        // Get the system language of the phone (e.g., "ru", "en", "pt")
         val systemLangCode = Locale.getDefault().language
 
         _viewState.update { currentState ->
@@ -67,14 +69,7 @@ class TranslatorViewModel(
 
     fun handleIntent(intent: TranslatorIntent) {
         when (intent) {
-            is TranslatorIntent.ChangeInputText -> {
-                // И мгновенно обновляем текст в UI (чтобы буквы появлялись без задержек)
-                _viewState.update { it.copy(inputText = intent.text, selectedWordRange = null) }
-                // И отправляем текст в поток автоперевода
-                _inputTextFlow.value = intent.text
-            }
-
-            TranslatorIntent.SetSourceLanguage -> {
+            is TranslatorIntent.SetSourceLanguage -> {
                 val sourceLanguageName = Locale(Locale.getDefault().language).getDisplayName(Locale.getDefault())
                 _viewState.update {
                     it.copy(
@@ -202,6 +197,13 @@ class TranslatorViewModel(
                     _viewState.update { it.copy(selectedWordRange = null) }
                 }
             }
+
+            is TranslatorIntent.ChangeInputText -> {
+                // Update the text in UI immediately (so characters appear without lag)
+                _viewState.update { it.copy(inputText = intent.text, selectedWordRange = null) }
+                // And send the text to the auto-translation stream
+                _inputTextFlow.value = intent.text
+            }
         }
     }
 
@@ -211,9 +213,9 @@ class TranslatorViewModel(
 
         viewModelScope.launch {
             val result = repository.translateText(
-                text = word,
-                sourceLangCode = currentState.sourceLangCode,
-                targetLangCode = currentState.targetLangCode
+                word,
+                currentState.sourceLangCode,
+                currentState.targetLangCode
             )
 
             result.onSuccess { translation ->
@@ -232,9 +234,9 @@ class TranslatorViewModel(
             _viewState.update { it.copy(isLoading = true, error = null) }
 
             val result = repository.translateText(
-                text = textToTranslate,
-                sourceLangCode = currentState.sourceLangCode,
-                targetLangCode = currentState.targetLangCode
+                textToTranslate,
+                currentState.sourceLangCode,
+                currentState.targetLangCode
             )
 
             result.onSuccess { translationResult ->

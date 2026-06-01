@@ -1,4 +1,4 @@
-package com.literaltranslator
+package com.literaltranslator.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -14,12 +14,12 @@ import androidx.compose.ui.graphics.RectangleShape
 fun Modifier.shimmerLoading(
     isLoading: Boolean,
     shape: Shape = RectangleShape,
-    contentColor: Color = Color(0xFFE0E0E0), // Базовый серый цвет подложки
-    shimmerColor: Color = Color(0xFFF5F5F5)  // Светлый цвет бегущего блика
+    contentColor: Color = Color(0xFFE0E0E0), // Base gray color for the background
+    shimmerColor: Color = Color(0xFFF5F5F5)  // Light color for the shimmer highlight
 ): Modifier {
     if (!isLoading) return this
 
-    // 1. Создаем бесконечную анимацию перехода от 0 до 1000 пикселей
+    // 1. Create an infinite transition animation from 0 to 1000 pixels
     val transition = rememberInfiniteTransition(label = "ShimmerTransition")
     val translateAnim = transition.animateFloat(
         initialValue = 0f,
@@ -31,7 +31,7 @@ fun Modifier.shimmerLoading(
         label = "ShimmerAnimation"
     )
 
-    // 2. Формируем линейный градиент с наклоном
+    // 2. Form a linear gradient with a slope
     val shimmerColors = listOf(
         contentColor,
         shimmerColor,
@@ -44,6 +44,6 @@ fun Modifier.shimmerLoading(
         end = Offset(x = translateAnim.value, y = translateAnim.value)
     )
 
-    // 3. Возвращаем модификатор с наложенным градиентным фоном и формой
+    // 3. Return the modifier with the applied gradient background and shape
     return this.background(brush = brush, shape = shape)
 }

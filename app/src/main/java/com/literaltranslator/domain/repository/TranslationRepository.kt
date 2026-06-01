@@ -1,4 +1,6 @@
-package com.literaltranslator
+package com.literaltranslator.domain.repository
+
+import com.literaltranslator.domain.model.LanguageModel
 
 interface TranslationRepository {
     /**

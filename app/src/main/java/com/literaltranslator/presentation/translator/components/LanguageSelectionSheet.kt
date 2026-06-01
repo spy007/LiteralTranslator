@@ -1,4 +1,4 @@
-package com.literaltranslator
+package com.literaltranslator.presentation.translator.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.literaltranslator.domain.model.LanguageModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
