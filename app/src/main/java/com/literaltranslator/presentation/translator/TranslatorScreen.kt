@@ -133,17 +133,17 @@ fun TranslatorScreenContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.6f)
+                    .weight(0.45f)
                     .background(BackgroundGray, shape = TopWaveDesignShape)
             ) {
-                Box(modifier = Modifier.padding(top = 60.dp)) {
+                Box(modifier = Modifier.padding(top = 40.dp)) {
                     TranslatorInputSection(state, onIntent)
                 }
             }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.4f)
+                    .weight(0.45f)
             ) {
                 TranslatorOutputSection(state, onIntent)
             }
@@ -159,7 +159,7 @@ fun TranslatorScreenContent(
             Box(
                 modifier = Modifier
                     .weight(0.8f)
-                    .height(50.dp)
+                    .height(40.dp)
                     .background(BrandBlue, shape = TopWaveDesignShape)
             ) {
                 TopNavigationBar()

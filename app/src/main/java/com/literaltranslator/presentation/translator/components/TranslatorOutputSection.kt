@@ -17,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import com.literaltranslator.R
 import com.literaltranslator.presentation.translator.TranslatorIntent
 import com.literaltranslator.presentation.translator.TranslatorState
-import com.literaltranslator.ui.theme.TextDark
 import com.literaltranslator.ui.theme.TextPrimary
 import com.literaltranslator.ui.theme.mainFont
 import com.literaltranslator.ui.components.shimmerLoading
@@ -34,7 +33,7 @@ fun TranslatorOutputSection(
             .padding(24.dp)
     ) {
         Column {
-            Spacer(modifier = Modifier.height(24.dp)) // Compensate for top curve
+            Spacer(modifier = Modifier.height(8.dp)) // Compensate for top curve
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -88,7 +87,7 @@ fun TranslatorOutputSection(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             // DISPLAY LOGIC: Shimmer loading or Text
             if (state.isLoading) {
                 // Shimmer effect during translation or package download
@@ -106,9 +105,10 @@ fun TranslatorOutputSection(
                         .shimmerLoading(isLoading = true, shape = RoundedCornerShape(4.dp))
                 )
             } else {
+                val textColor = if (state.translatedText.isEmpty()) TextPrimary.copy(alpha = 0.5f) else TextPrimary
                 Text(
                     text = state.translatedText.ifBlank { stringResource(R.string.translation_hint) },
-                    color = TextDark,
+                    color = textColor,
                     fontFamily = mainFont,
                     fontSize = 24.sp,
                     lineHeight = 36.sp,

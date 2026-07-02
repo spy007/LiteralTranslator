@@ -21,7 +21,7 @@ import com.literaltranslator.R
 import com.literaltranslator.presentation.translator.TranslatorIntent
 import com.literaltranslator.presentation.translator.TranslatorState
 import com.literaltranslator.ui.theme.BrandBlue
-import com.literaltranslator.ui.theme.TextDark
+import com.literaltranslator.ui.theme.TextPrimary
 import com.literaltranslator.ui.theme.mainFont
 
 @Composable
@@ -53,7 +53,7 @@ fun BottomLanguageSelector(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(56.dp)
             .shadow(8.dp, shape = panelShape)
             .background(Color.White, shape = panelShape)
     ) {
@@ -78,10 +78,10 @@ fun BottomLanguageSelector(
             ) {
                 Text(
                     text = state.sourceLanguageName,
-                    color = TextDark,
+                    color = TextPrimary,
                     fontFamily = mainFont,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium
                 )
             }
             Spacer(modifier = Modifier.width(48.dp))
@@ -97,7 +97,7 @@ fun BottomLanguageSelector(
                     color = Color.White,
                     fontFamily = mainFont,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium
                 )
             }
         }

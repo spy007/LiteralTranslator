@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.literaltranslator.R
@@ -19,7 +20,7 @@ fun TopNavigationBar() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(40.dp)
     ) {
         IconButton(
             onClick = {},
@@ -31,16 +32,22 @@ fun TopNavigationBar() {
                 painter = painterResource(id = R.drawable.ic_menu),
                 contentDescription = stringResource(R.string.menu_desc),
                 tint = Color.White,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
         Text(
-            text = "Literal Translator",
+            text = stringResource(R.string.app_name),
             color = Color.White,
             fontFamily = mainFont,
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.align(Alignment.Center)
         )
     }
+}
+
+@Preview
+@Composable
+fun TopNavigationBarPreview() {
+    TopNavigationBar()
 }

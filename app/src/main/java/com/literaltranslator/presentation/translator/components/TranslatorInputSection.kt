@@ -82,7 +82,7 @@ fun TranslatorInputSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
-            .padding(top = 24.dp)
+            .padding(top = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
