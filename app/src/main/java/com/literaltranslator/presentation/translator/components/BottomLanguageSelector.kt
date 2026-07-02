@@ -69,6 +69,7 @@ fun BottomLanguageSelector(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // TODO: Make shadow for bottom button 'translate to' (try to make shadow how it is made for circle button)
             Box(
                 modifier = Modifier
                     .weight(1f)

@@ -22,3 +22,4 @@ class ExampleInstrumentedTest {
         assertEquals("com.testapp", appContext.packageName)
     }
 }
+// TODO: create UI tests

@@ -15,3 +15,4 @@ class ExampleUnitTest {
         assertEquals(4, 2 + 2)
     }
 }
+// TODO: create tests for each layer of the architecture

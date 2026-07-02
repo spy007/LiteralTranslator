@@ -2,8 +2,6 @@ package com.literaltranslator.presentation.translator.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -60,6 +58,7 @@ fun TranslatorOutputSection(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // TODO: Create functional to open favourite words
                     Icon(
                         painter = painterResource(id = R.drawable.ic_star_rounded),
                         contentDescription = stringResource(R.string.favorites_desc),
@@ -77,13 +76,6 @@ fun TranslatorOutputSection(
                             tint = TextPrimary.copy(alpha = 0.6f)
                         )
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.more_desc),
-                        tint = TextPrimary.copy(alpha = 0.6f),
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
             }
 

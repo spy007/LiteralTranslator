@@ -18,6 +18,7 @@ class TranslationRepositoryImpl : TranslationRepository {
         sourceLangCode: String,
         targetLangCode: String
     ): Result<String> = withContext(Dispatchers.IO) {
+        // FIXME: check that it seems it initializes this translation object for each performing translation. better to save this object separately may be like in data store check how it was made in CircleLoop project
         try {
             val options = TranslatorOptions.Builder()
                 .setSourceLanguage(sourceLangCode)

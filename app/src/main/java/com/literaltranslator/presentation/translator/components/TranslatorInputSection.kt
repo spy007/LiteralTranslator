@@ -120,9 +120,9 @@ fun TranslatorInputSection(
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.height(12.dp))
 
+        Spacer(modifier = Modifier.height(12.dp))
+// FIXME: not showing word translation when selecting word to translate (reason: .pointerInput() is not triggering )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -136,6 +136,7 @@ fun TranslatorInputSection(
                     }
                 }
         ) {
+            // TODO: close keyboard when press on free space in input section
             BasicTextField(
                 value = state.inputText,
                 onValueChange = { onIntent(TranslatorIntent.ChangeInputText(it)) },
@@ -204,7 +205,7 @@ fun TranslatorInputSection(
                     }
                 }
             )
-
+// FIXME: fix showing translation of word in bubble
             // CONTEXTUAL BUBBLE (POPUP)
             state.selectedWordRange?.let { range ->
                 textLayoutResult?.let { layout ->
@@ -212,7 +213,7 @@ fun TranslatorInputSection(
                         val rect = layout.getBoundingBox(range.first)
                         val density = LocalDensity.current
                         val yOffsetPx = with(density) { -44.dp.toPx() }
-                        
+
                         Popup(
                             alignment = Alignment.TopStart,
                             offset = IntOffset(
@@ -229,7 +230,10 @@ fun TranslatorInputSection(
                             ) {
                                 Text(
                                     text = state.selectedWordTranslation,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    modifier = Modifier.padding(
+                                        horizontal = 12.dp,
+                                        vertical = 6.dp
+                                    ),
                                     color = BrandBlue,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
@@ -243,3 +247,5 @@ fun TranslatorInputSection(
         }
     }
 }
+
+// TODO: create @Preview for every Compose component

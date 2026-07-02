@@ -38,6 +38,7 @@ fun TopNavigationBar() {
         Text(
             text = stringResource(R.string.app_name),
             color = Color.White,
+            // TODO: change font to my stylish
             fontFamily = mainFont,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
@@ -46,6 +47,7 @@ fun TopNavigationBar() {
     }
 }
 
+// FIXME: Preview not showing in Design tab
 @Preview
 @Composable
 fun TopNavigationBarPreview() {
