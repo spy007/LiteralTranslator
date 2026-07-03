@@ -1,6 +1,7 @@
 package com.literaltranslator.presentation.translator.components
 
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -128,14 +130,16 @@ fun TranslatorInputSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .pointerInput(state.inputText) {
-                    awaitEachGesture {
-                        // Use PointerEventPass.Initial to intercept the tap before BasicTextField consumes it
-                        val up = waitForUpOrCancellation(pass = PointerEventPass.Initial)
-                        if (up != null) {
-                            textLayoutResult?.let { layout ->
-                                val position = layout.getOffsetForPosition(up.position)
-                                val range = findWordRange(state.inputText, position)
-                                onIntent(TranslatorIntent.SelectWord(range))
+                    awaitPointerEventScope {
+                        while (true) {
+                            awaitFirstDown(pass = PointerEventPass.Initial)
+                            val up = waitForUpOrCancellation(pass = PointerEventPass.Initial)
+                            if (up != null) {
+                                textLayoutResult?.let { layout ->
+                                    val position = layout.getOffsetForPosition(up.position)
+                                    val range = findWordRange(state.inputText, position)
+                                    onIntent(TranslatorIntent.SelectWord(range))
+                                }
                             }
                         }
                     }
@@ -210,17 +214,15 @@ fun TranslatorInputSection(
                     }
                 }
             )
-            // CONTEXTUAL BUBBLE (POPUP)
             state.selectedWordRange?.let { range ->
                 textLayoutResult?.let { layout ->
-                    if (range.first in state.inputText.indices && state.selectedWordTranslation.isNotBlank()) {
+                    if (range.first in state.inputText.indices) {
                         val firstBounds = layout.getBoundingBox(range.first)
                         val lastBounds = layout.getBoundingBox(range.last)
-                        // Center the bubble horizontally over the selected word
                         val centerX = (firstBounds.left + lastBounds.right) / 2
                         
                         val density = LocalDensity.current
-                        val yOffsetPx = with(density) { -48.dp.toPx() } // Increased offset for better spacing
+                        val yOffsetPx = with(density) { -44.dp.toPx() }
 
                         Popup(
                             alignment = Alignment.TopStart,
@@ -233,20 +235,44 @@ fun TranslatorInputSection(
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = Color.White,
-                                shadowElevation = 4.dp,
+                                shadowElevation = 8.dp,
                                 modifier = Modifier.padding(horizontal = 8.dp)
                             ) {
-                                Text(
-                                    text = state.selectedWordTranslation,
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(
-                                        horizontal = 12.dp,
+                                        horizontal = 10.dp,
                                         vertical = 6.dp
-                                    ),
-                                    color = BrandBlue,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = mainFont
-                                )
+                                    )
+                                ) {
+                                    if (state.selectedWordTranslation.isBlank()) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = BrandBlue
+                                        )
+                                    } else {
+                                        IconButton(
+                                            onClick = { onIntent(TranslatorIntent.SpeakSelectedWordTranslation) },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_sound),
+                                                contentDescription = stringResource(R.string.target_speech_desc),
+                                                tint = BrandBlue,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = state.selectedWordTranslation,
+                                            color = BrandBlue,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = mainFont
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

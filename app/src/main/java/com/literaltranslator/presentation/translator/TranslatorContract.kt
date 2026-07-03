@@ -31,6 +31,7 @@ sealed interface TranslatorIntent {
     
     data object SpeakSourceText : TranslatorIntent
     data object SpeakTargetText : TranslatorIntent
+    data object SpeakSelectedWordTranslation : TranslatorIntent
 
     data object CopyTranslation : TranslatorIntent
 

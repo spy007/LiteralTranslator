@@ -122,6 +122,14 @@ class TranslatorViewModel(
                 }
             }
 
+            TranslatorIntent.SpeakSelectedWordTranslation -> {
+                val text = _viewState.value.selectedWordTranslation
+                val lang = _viewState.value.targetLangCode
+                if (text.isNotBlank()) {
+                    viewModelScope.launch { _effect.emit(TranslatorEffect.PlaySpeech(text, lang)) }
+                }
+            }
+
             TranslatorIntent.CopyTranslation -> {
                 val text = _viewState.value.translatedText
                 if (text.isNotBlank()) {
@@ -189,12 +197,13 @@ class TranslatorViewModel(
                     _viewState.update {
                         it.copy(
                             selectedWordRange = range,
-                            selectedWord = word
+                            selectedWord = word,
+                            selectedWordTranslation = "" // Clear previous translation
                         )
                     }
                     triggerWordTranslation(word)
                 } else {
-                    _viewState.update { it.copy(selectedWordRange = null) }
+                    _viewState.update { it.copy(selectedWordRange = null, selectedWordTranslation = "") }
                 }
             }
 
