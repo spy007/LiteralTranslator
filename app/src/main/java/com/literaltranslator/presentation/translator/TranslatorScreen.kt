@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,29 +32,12 @@ import com.literaltranslator.presentation.translator.components.TopNavigationBar
 import com.literaltranslator.presentation.translator.components.TranslatorInputSection
 import com.literaltranslator.presentation.translator.components.TranslatorOutputSection
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import com.literaltranslator.ui.theme.BackgroundGray
 import com.literaltranslator.ui.theme.BrandBlue
 import com.literaltranslator.ui.theme.TestAppTheme
 import com.literaltranslator.ui.theme.TopWaveDesignShape
 import com.literaltranslator.utils.TextToSpeechManager
-
-@Preview(showBackground = true, widthDp = 360, heightDp = 640)
-@Composable
-fun TranslatorScreenContentPreview() {
-    TestAppTheme {
-        Surface {
-            TranslatorScreenContent(
-                state = TranslatorState(
-                    inputText = "Hello, how are you?",
-                    translatedText = "Hola, ¿cómo estás?",
-                    sourceLanguageName = "English",
-                    targetLanguageName = "Spanish"
-                ),
-                onIntent = {}
-            )
-        }
-    }
-}
 
 @Composable
 fun TranslatorScreen(modifier: Modifier = Modifier) {
@@ -66,11 +50,14 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
     val state by viewModel.viewState.collectAsState()
 
     val context = LocalContext.current
-    val ttsManager = remember { TextToSpeechManager(context) }
+    val isInspectionMode = LocalInspectionMode.current
+    val ttsManager = remember {
+        if (isInspectionMode) null else TextToSpeechManager(context)
+    }
     val clipboardManager = LocalClipboardManager.current
 
     DisposableEffect(Unit) {
-        onDispose { ttsManager.shutdown() }
+        onDispose { ttsManager?.shutdown() }
     }
 
     LaunchedEffect(Unit) {
@@ -94,7 +81,7 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
                 }
 
                 is TranslatorEffect.PlaySpeech -> {
-                    ttsManager.speak(effect.text, effect.langCode)
+                    ttsManager?.speak(effect.text, effect.langCode)
                 }
 
                 is TranslatorEffect.CopyToClipboard -> {
@@ -170,5 +157,38 @@ fun TranslatorScreenContent(
                     .height(50.dp)
             )
         }
+    }
+}
+
+// Preview is working in PreviewScreen.kt
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+fun TranslatorScreenPreview() {
+    TestAppTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.White
+        ) {
+            Column {
+                Text(text = "Preview Active", modifier = Modifier.padding(8.dp), color = Color.Red)
+                TranslatorScreenContent(
+                    state = TranslatorState(
+                        inputText = "Hello World",
+                        translatedText = "Olá Mundo",
+                        sourceLanguageName = "English",
+                        targetLanguageName = "Portuguese"
+                    ),
+                    onIntent = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TranslatorScreenPreview1() {
+    TestAppTheme {
+        TranslatorScreen()
     }
 }
