@@ -14,4 +14,7 @@ interface TranslationRepository {
     ): Result<String>
 
     suspend fun getAvailableLanguages(): Result<List<LanguageModel>>
+
+    suspend fun toggleFavorite(word: String, translation: String, sourceLang: String, targetLang: String)
+    suspend fun isFavorite(word: String, sourceLang: String, targetLang: String): Boolean
 }

@@ -60,7 +60,7 @@ fun TranslatorOutputSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // TODO: Create functional to open favourite words
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_star_rounded),
+                        painter = painterResource(id = R.drawable.ic_star),
                         contentDescription = stringResource(R.string.favorites_desc),
                         tint = Color(0xFFFFB300),
                         modifier = Modifier.size(20.dp)

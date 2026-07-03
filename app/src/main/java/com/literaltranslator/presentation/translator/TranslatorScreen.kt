@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.literaltranslator.data.local.AppDatabase
 import com.literaltranslator.data.repository.TranslationRepositoryImpl
 import com.literaltranslator.presentation.translator.components.BottomLanguageSelector
 import com.literaltranslator.presentation.translator.components.TopNavigationBar
@@ -41,9 +42,15 @@ import com.literaltranslator.utils.TextToSpeechManager
 
 @Composable
 fun TranslatorScreen(modifier: Modifier = Modifier) {
+    val appContext = LocalContext.current.applicationContext
     val factory = viewModelFactory {
         initializer {
-            TranslatorViewModel(repository = TranslationRepositoryImpl())
+            val database = AppDatabase.getDatabase(appContext)
+            TranslatorViewModel(
+                repository = TranslationRepositoryImpl(
+                    favoriteDao = database.favoriteDao()
+                )
+            )
         }
     }
     val viewModel: TranslatorViewModel = viewModel(factory = factory)

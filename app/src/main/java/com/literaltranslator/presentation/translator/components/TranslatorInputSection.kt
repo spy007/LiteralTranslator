@@ -1,6 +1,5 @@
 package com.literaltranslator.presentation.translator.components
 
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
@@ -15,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -259,7 +257,7 @@ fun TranslatorInputSection(
                                             Icon(
                                                 painter = painterResource(id = R.drawable.ic_sound),
                                                 contentDescription = stringResource(R.string.target_speech_desc),
-                                                tint = BrandBlue,
+                                                tint = TextPrimary,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -271,6 +269,26 @@ fun TranslatorInputSection(
                                             fontWeight = FontWeight.Bold,
                                             fontFamily = mainFont
                                         )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        IconButton(
+                                            onClick = { onIntent(TranslatorIntent.ToggleFavoriteSelectedWord) },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            if (state.isSelectedWordFavorite) {
+                                                Icon(
+                                                    painter = painterResource(id = R.drawable.ic_star),
+                                                    contentDescription = stringResource(R.string.favorites_desc),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    painter = painterResource(id = R.drawable.ic_star_outlined),
+                                                    contentDescription = stringResource(R.string.favorites_desc),
+                                                    tint = TextPrimary,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

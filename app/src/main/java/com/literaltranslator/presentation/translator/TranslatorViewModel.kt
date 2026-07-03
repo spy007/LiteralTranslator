@@ -198,12 +198,39 @@ class TranslatorViewModel(
                         it.copy(
                             selectedWordRange = range,
                             selectedWord = word,
-                            selectedWordTranslation = "" // Clear previous translation
+                            selectedWordTranslation = "", // Clear previous translation
+                            isSelectedWordFavorite = false
                         )
                     }
                     triggerWordTranslation(word)
                 } else {
-                    _viewState.update { it.copy(selectedWordRange = null, selectedWordTranslation = "") }
+                    _viewState.update { 
+                        it.copy(
+                            selectedWordRange = null, 
+                            selectedWordTranslation = "",
+                            isSelectedWordFavorite = false
+                        ) 
+                    }
+                }
+            }
+
+            TranslatorIntent.ToggleFavoriteSelectedWord -> {
+                val state = _viewState.value
+                if (state.selectedWord.isNotBlank() && state.selectedWordTranslation.isNotBlank()) {
+                    viewModelScope.launch {
+                        repository.toggleFavorite(
+                            word = state.selectedWord,
+                            translation = state.selectedWordTranslation,
+                            sourceLang = state.sourceLangCode,
+                            targetLang = state.targetLangCode
+                        )
+                        val isFav = repository.isFavorite(
+                            state.selectedWord,
+                            state.sourceLangCode,
+                            state.targetLangCode
+                        )
+                        _viewState.update { it.copy(isSelectedWordFavorite = isFav) }
+                    }
                 }
             }
 
@@ -228,7 +255,17 @@ class TranslatorViewModel(
             )
 
             result.onSuccess { translation ->
-                _viewState.update { it.copy(selectedWordTranslation = translation) }
+                val isFav = repository.isFavorite(
+                    word,
+                    currentState.sourceLangCode,
+                    currentState.targetLangCode
+                )
+                _viewState.update { 
+                    it.copy(
+                        selectedWordTranslation = translation,
+                        isSelectedWordFavorite = isFav
+                    ) 
+                }
             }
         }
     }
