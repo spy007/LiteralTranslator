@@ -1,6 +1,8 @@
 package com.literaltranslator.presentation.translator.components
 
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -12,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -122,16 +125,20 @@ fun TranslatorInputSection(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-// FIXME: not showing word translation when selecting word to translate (reason: .pointerInput() is not triggering )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .pointerInput(state.inputText) {
-                    detectTapGestures { offset ->
-                        textLayoutResult?.let { layout ->
-                            val position = layout.getOffsetForPosition(offset)
-                            val range = findWordRange(state.inputText, position)
-                            onIntent(TranslatorIntent.SelectWord(range))
+                    awaitEachGesture {
+                        // Use PointerEventPass.Initial to intercept the tap before BasicTextField consumes it
+                        val down = awaitFirstDown(pass = PointerEventPass.Initial)
+                        val up = waitForUpOrCancellation(pass = PointerEventPass.Initial)
+                        if (up != null) {
+                            textLayoutResult?.let { layout ->
+                                val position = layout.getOffsetForPosition(up.position)
+                                val range = findWordRange(state.inputText, position)
+                                onIntent(TranslatorIntent.SelectWord(range))
+                            }
                         }
                     }
                 }
@@ -205,20 +212,23 @@ fun TranslatorInputSection(
                     }
                 }
             )
-// FIXME: fix showing translation of word in bubble
             // CONTEXTUAL BUBBLE (POPUP)
             state.selectedWordRange?.let { range ->
                 textLayoutResult?.let { layout ->
                     if (range.first in state.inputText.indices && state.selectedWordTranslation.isNotBlank()) {
-                        val rect = layout.getBoundingBox(range.first)
+                        val firstBounds = layout.getBoundingBox(range.first)
+                        val lastBounds = layout.getBoundingBox(range.last)
+                        // Center the bubble horizontally over the selected word
+                        val centerX = (firstBounds.left + lastBounds.right) / 2
+                        
                         val density = LocalDensity.current
-                        val yOffsetPx = with(density) { -44.dp.toPx() }
+                        val yOffsetPx = with(density) { -48.dp.toPx() } // Increased offset for better spacing
 
                         Popup(
                             alignment = Alignment.TopStart,
                             offset = IntOffset(
-                                x = rect.left.roundToInt(),
-                                y = (rect.top + yOffsetPx).roundToInt()
+                                x = (centerX - with(density) { 40.dp.toPx() }).roundToInt().coerceAtLeast(0),
+                                y = (firstBounds.top + yOffsetPx).roundToInt()
                             ),
                             onDismissRequest = { onIntent(TranslatorIntent.SelectWord(null)) }
                         ) {
