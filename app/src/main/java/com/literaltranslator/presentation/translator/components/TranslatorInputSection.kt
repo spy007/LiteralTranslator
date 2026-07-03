@@ -131,7 +131,6 @@ fun TranslatorInputSection(
                 .pointerInput(state.inputText) {
                     awaitEachGesture {
                         // Use PointerEventPass.Initial to intercept the tap before BasicTextField consumes it
-                        val down = awaitFirstDown(pass = PointerEventPass.Initial)
                         val up = waitForUpOrCancellation(pass = PointerEventPass.Initial)
                         if (up != null) {
                             textLayoutResult?.let { layout ->
