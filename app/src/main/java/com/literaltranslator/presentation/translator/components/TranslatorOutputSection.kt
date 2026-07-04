@@ -58,13 +58,19 @@ fun TranslatorOutputSection(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // TODO: Create functional to open favourite words
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_star),
-                        contentDescription = stringResource(R.string.favorites_desc),
-                        tint = Color(0xFFFFB300),
-                        modifier = Modifier.size(20.dp)
-                    )
+                    IconButton(
+                        onClick = { onIntent(TranslatorIntent.ToggleFavoriteTranslation) },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                id = if (state.isTranslationFavorite) R.drawable.ic_star else R.drawable.ic_star_outlined
+                            ),
+                            contentDescription = stringResource(R.string.favorites_desc),
+                            tint = if (state.isTranslationFavorite) Color(0xFFFFB300) else TextPrimary.copy(alpha = 0.6f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(16.dp))
                     IconButton(
                         onClick = { onIntent(TranslatorIntent.CopyTranslation) },

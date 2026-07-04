@@ -102,7 +102,12 @@ class TranslatorViewModel(
             TranslatorIntent.ClearText -> {
                 _inputTextFlow.value = ""
                 _viewState.update {
-                    it.copy(inputText = "", translatedText = "", selectedWordRange = null)
+                    it.copy(
+                        inputText = "",
+                        translatedText = "",
+                        selectedWordRange = null,
+                        isTranslationFavorite = false
+                    )
                 }
             }
 
@@ -234,6 +239,26 @@ class TranslatorViewModel(
                 }
             }
 
+            TranslatorIntent.ToggleFavoriteTranslation -> {
+                val state = _viewState.value
+                if (state.inputText.isNotBlank() && state.translatedText.isNotBlank()) {
+                    viewModelScope.launch {
+                        repository.toggleFavorite(
+                            word = state.inputText,
+                            translation = state.translatedText,
+                            sourceLang = state.sourceLangCode,
+                            targetLang = state.targetLangCode
+                        )
+                        val isFav = repository.isFavorite(
+                            state.inputText,
+                            state.sourceLangCode,
+                            state.targetLangCode
+                        )
+                        _viewState.update { it.copy(isTranslationFavorite = isFav) }
+                    }
+                }
+            }
+
             is TranslatorIntent.ChangeInputText -> {
                 // Update the text in UI immediately (so characters appear without lag)
                 _viewState.update { it.copy(inputText = intent.text, selectedWordRange = null) }
@@ -277,7 +302,7 @@ class TranslatorViewModel(
         if (textToTranslate.isBlank()) return
 
         viewModelScope.launch {
-            _viewState.update { it.copy(isLoading = true, error = null) }
+            _viewState.update { it.copy(isLoading = true, error = null, isTranslationFavorite = false) }
 
             val result = repository.translateText(
                 textToTranslate,
@@ -286,10 +311,16 @@ class TranslatorViewModel(
             )
 
             result.onSuccess { translationResult ->
+                val isFav = repository.isFavorite(
+                    textToTranslate,
+                    currentState.sourceLangCode,
+                    currentState.targetLangCode
+                )
                 _viewState.update {
                     it.copy(
                         translatedText = translationResult,
-                        isLoading = false
+                        isLoading = false,
+                        isTranslationFavorite = isFav
                     )
                 }
             }.onFailure { exception ->

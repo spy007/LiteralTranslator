@@ -19,7 +19,8 @@ data class TranslatorState(
     val selectedWordRange: IntRange? = null,
     val selectedWord: String = "",
     val selectedWordTranslation: String = "",
-    val isSelectedWordFavorite: Boolean = false
+    val isSelectedWordFavorite: Boolean = false,
+    val isTranslationFavorite: Boolean = false
 )
 
 // Updated intents interface
@@ -50,6 +51,7 @@ sealed interface TranslatorIntent {
 
     data class SelectWord(val range: IntRange?) : TranslatorIntent
     data object ToggleFavoriteSelectedWord : TranslatorIntent
+    data object ToggleFavoriteTranslation : TranslatorIntent
 }
 
 
