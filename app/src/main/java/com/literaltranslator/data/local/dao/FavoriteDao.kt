@@ -24,4 +24,7 @@ interface FavoriteDao {
 
     @Query("DELETE FROM favorite_words WHERE word = :word AND sourceLang = :sourceLang AND targetLang = :targetLang")
     suspend fun deleteFavoriteByDetails(word: String, sourceLang: String, targetLang: String)
+
+    @Query("DELETE FROM favorite_words WHERE id = :id")
+    suspend fun deleteFavoriteById(id: Int)
 }

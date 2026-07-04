@@ -8,7 +8,10 @@ import com.literaltranslator.data.local.dao.FavoriteDao
 import com.literaltranslator.data.local.entity.FavoriteWord
 import com.literaltranslator.domain.repository.TranslationRepository
 import com.literaltranslator.domain.model.LanguageModel
+import com.literaltranslator.domain.model.FavoriteModel
 import com.literaltranslator.utils.getLanguageName
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -86,5 +89,24 @@ class TranslationRepositoryImpl(
         targetLang: String
     ): Boolean {
         return favoriteDao?.isFavorite(word, sourceLang, targetLang) ?: false
+    }
+
+    override fun getAllFavorites(): Flow<List<FavoriteModel>> {
+        return favoriteDao?.getAllFavorites()?.map { list ->
+            list.map {
+                FavoriteModel(
+                    id = it.id,
+                    word = it.word,
+                    translation = it.translation,
+                    sourceLangCode = it.sourceLang,
+                    targetLangCode = it.targetLang,
+                    timestamp = it.timestamp
+                )
+            }
+        } ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    }
+
+    override suspend fun deleteFavoriteById(id: Int) {
+        favoriteDao?.deleteFavoriteById(id)
     }
 }

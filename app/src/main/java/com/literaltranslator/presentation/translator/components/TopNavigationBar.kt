@@ -16,7 +16,9 @@ import com.literaltranslator.R
 import com.literaltranslator.ui.theme.mainFont
 
 @Composable
-fun TopNavigationBar() {
+fun TopNavigationBar(
+    onFavoritesClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -44,6 +46,19 @@ fun TopNavigationBar() {
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.align(Alignment.Center)
         )
+        IconButton(
+            onClick = onFavoritesClick,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 4.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_star),
+                contentDescription = stringResource(R.string.favorites_desc),
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }
 
@@ -51,5 +66,5 @@ fun TopNavigationBar() {
 @Preview
 @Composable
 fun TopNavigationBarPreview() {
-    TopNavigationBar()
+    TopNavigationBar(onFavoritesClick = {})
 }

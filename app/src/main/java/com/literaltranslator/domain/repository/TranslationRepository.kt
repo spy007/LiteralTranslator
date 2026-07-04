@@ -1,6 +1,8 @@
 package com.literaltranslator.domain.repository
 
 import com.literaltranslator.domain.model.LanguageModel
+import com.literaltranslator.domain.model.FavoriteModel
+import kotlinx.coroutines.flow.Flow
 
 interface TranslationRepository {
     /**
@@ -17,4 +19,6 @@ interface TranslationRepository {
 
     suspend fun toggleFavorite(word: String, translation: String, sourceLang: String, targetLang: String)
     suspend fun isFavorite(word: String, sourceLang: String, targetLang: String): Boolean
+    fun getAllFavorites(): Flow<List<FavoriteModel>>
+    suspend fun deleteFavoriteById(id: Int)
 }

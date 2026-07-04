@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.literaltranslator.data.local.AppDatabase
 import com.literaltranslator.data.repository.TranslationRepositoryImpl
 import com.literaltranslator.presentation.translator.components.BottomLanguageSelector
+import com.literaltranslator.presentation.translator.components.FavoritesSheet
 import com.literaltranslator.presentation.translator.components.TopNavigationBar
 import com.literaltranslator.presentation.translator.components.TranslatorInputSection
 import com.literaltranslator.presentation.translator.components.TranslatorOutputSection
@@ -118,6 +119,13 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
         modifier = modifier,
         onIntent = (viewModel::handleIntent)
     )
+
+    if (state.isShowingFavorites) {
+        FavoritesSheet(
+            favorites = state.favorites,
+            onIntent = viewModel::handleIntent
+        )
+    }
 }
 
 @Composable
@@ -167,7 +175,9 @@ fun TranslatorScreenContent(
                     .height(40.dp)
                     .background(BrandBlue, shape = TopWaveDesignShape)
             ) {
-                TopNavigationBar()
+                TopNavigationBar(
+                    onFavoritesClick = { onIntent(TranslatorIntent.OpenFavorites) }
+                )
             }
             Box(
                 modifier = Modifier

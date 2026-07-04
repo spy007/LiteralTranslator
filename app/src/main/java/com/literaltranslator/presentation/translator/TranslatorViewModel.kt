@@ -39,6 +39,13 @@ class TranslatorViewModel(
         initializeDefaultLanguages()
         // Immediately load supported languages from ML Kit in the background
         loadAvailableLanguages()
+
+        // Observe favorites from database
+        repository.getAllFavorites()
+            .onEach { favs ->
+                _viewState.update { it.copy(favorites = favs) }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun initializeDefaultLanguages() {
@@ -273,6 +280,36 @@ class TranslatorViewModel(
                 _viewState.update { it.copy(inputText = intent.text, selectedWordRange = null) }
                 // And send the text to the auto-translation stream
                 _inputTextFlow.value = intent.text
+            }
+
+            TranslatorIntent.OpenFavorites -> {
+                _viewState.update { it.copy(isShowingFavorites = true) }
+            }
+
+            TranslatorIntent.CloseFavorites -> {
+                _viewState.update { it.copy(isShowingFavorites = false) }
+            }
+
+            is TranslatorIntent.DeleteFavorite -> {
+                viewModelScope.launch {
+                    repository.deleteFavoriteById(intent.id)
+                }
+            }
+
+            is TranslatorIntent.SelectFavorite -> {
+                _viewState.update {
+                    it.copy(
+                        inputText = intent.favorite.word,
+                        translatedText = intent.favorite.translation,
+                        sourceLangCode = intent.favorite.sourceLangCode,
+                        targetLangCode = intent.favorite.targetLangCode,
+                        sourceLanguageName = getLanguageName(intent.favorite.sourceLangCode),
+                        targetLanguageName = getLanguageName(intent.favorite.targetLangCode),
+                        isShowingFavorites = false,
+                        isTranslationFavorite = true
+                    )
+                }
+                _inputTextFlow.value = intent.favorite.word
             }
         }
     }

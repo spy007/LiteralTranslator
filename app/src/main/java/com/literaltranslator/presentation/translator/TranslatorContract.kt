@@ -1,6 +1,7 @@
 package com.literaltranslator.presentation.translator
 
 import com.literaltranslator.domain.model.LanguageModel
+import com.literaltranslator.domain.model.FavoriteModel
 
 // Updated TranslatorState
 data class TranslatorState(
@@ -20,7 +21,10 @@ data class TranslatorState(
     val selectedWord: String = "",
     val selectedWordTranslation: String = "",
     val isSelectedWordFavorite: Boolean = false,
-    val isTranslationFavorite: Boolean = false
+    val isTranslationFavorite: Boolean = false,
+
+    val favorites: List<FavoriteModel> = emptyList(),
+    val isShowingFavorites: Boolean = false
 )
 
 // Updated intents interface
@@ -53,6 +57,11 @@ sealed interface TranslatorIntent {
     data class SelectWord(val range: IntRange?) : TranslatorIntent
     data object ToggleFavoriteSelectedWord : TranslatorIntent
     data object ToggleFavoriteTranslation : TranslatorIntent
+
+    data object OpenFavorites : TranslatorIntent
+    data object CloseFavorites : TranslatorIntent
+    data class DeleteFavorite(val id: Int) : TranslatorIntent
+    data class SelectFavorite(val favorite: FavoriteModel) : TranslatorIntent
 }
 
 
