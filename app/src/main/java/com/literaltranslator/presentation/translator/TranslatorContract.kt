@@ -36,6 +36,7 @@ sealed interface TranslatorIntent {
     data object SpeakSelectedWordTranslation : TranslatorIntent
 
     data object CopyTranslation : TranslatorIntent
+    data object ShareTranslation : TranslatorIntent
 
     object ClickSourceLanguage : TranslatorIntent
 
@@ -63,4 +64,5 @@ sealed interface TranslatorEffect {
     
     data class PlaySpeech(val text: String, val langCode: String) : TranslatorEffect
     data class CopyToClipboard(val text: String) : TranslatorEffect
+    data class ShareText(val text: String) : TranslatorEffect
 }

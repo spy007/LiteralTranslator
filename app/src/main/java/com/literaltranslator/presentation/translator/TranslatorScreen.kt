@@ -1,5 +1,6 @@
 package com.literaltranslator.presentation.translator
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -93,6 +94,16 @@ fun TranslatorScreen(modifier: Modifier = Modifier) {
 
                 is TranslatorEffect.CopyToClipboard -> {
                     clipboardManager.setText(AnnotatedString(effect.text))
+                }
+
+                is TranslatorEffect.ShareText -> {
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, effect.text)
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, null)
+                    context.startActivity(shareIntent)
                 }
 
                 TranslatorEffect.TriggerHapticFeedback -> {

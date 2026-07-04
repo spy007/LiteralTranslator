@@ -2,6 +2,8 @@ package com.literaltranslator.presentation.translator.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -80,6 +82,18 @@ fun TranslatorOutputSection(
                             painter = painterResource(id = R.drawable.ic_copy),
                             contentDescription = stringResource(R.string.copy_desc),
                             tint = TextPrimary.copy(alpha = 0.6f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    IconButton(
+                        onClick = { onIntent(TranslatorIntent.ShareTranslation) },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.share_desc),
+                            tint = TextPrimary.copy(alpha = 0.6f),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

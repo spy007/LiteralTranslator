@@ -145,6 +145,15 @@ class TranslatorViewModel(
                 }
             }
 
+            TranslatorIntent.ShareTranslation -> {
+                val text = _viewState.value.translatedText
+                if (text.isNotBlank()) {
+                    viewModelScope.launch {
+                        _effect.emit(TranslatorEffect.ShareText(text))
+                    }
+                }
+            }
+
             is TranslatorIntent.ClickSourceLanguage -> {
                 _viewState.update { it.copy(isSelectingSourceLang = true) }
             }
