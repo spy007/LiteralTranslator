@@ -96,11 +96,18 @@ class TranslatorViewModel(
                     currentState.copy(
                         sourceLanguageName = currentState.targetLanguageName,
                         targetLanguageName = currentState.sourceLanguageName,
+                        sourceLangCode = currentState.targetLangCode,
+                        targetLangCode = currentState.sourceLangCode,
                         inputText = currentState.translatedText,
                         translatedText = currentState.inputText,
                         selectedWordRange = null
-                    ).also { triggerTranslation() }
+                    )
                 }
+                // Update the input text flow to match the new source text
+                _inputTextFlow.value = _viewState.value.inputText
+                // Trigger translation immediately with the new language configuration
+                triggerTranslation()
+
                 viewModelScope.launch {
                     _effect.emit(TranslatorEffect.TriggerHapticFeedback)
                 }
@@ -205,6 +212,8 @@ class TranslatorViewModel(
                     it.copy(
                         sourceLanguageName = it.targetLanguageName,
                         targetLanguageName = it.sourceLanguageName,
+                        sourceLangCode = it.targetLangCode,
+                        targetLangCode = it.sourceLangCode,
                         selectedWordRange = null
                     )
                 }
