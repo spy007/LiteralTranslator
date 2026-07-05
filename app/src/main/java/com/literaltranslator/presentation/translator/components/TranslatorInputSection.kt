@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +35,7 @@ import com.literaltranslator.R
 import com.literaltranslator.presentation.translator.TranslatorIntent
 import com.literaltranslator.presentation.translator.TranslatorState
 import com.literaltranslator.ui.theme.BrandBlue
+import com.literaltranslator.ui.theme.TestAppTheme
 import com.literaltranslator.ui.theme.TextLightGray
 import com.literaltranslator.ui.theme.TextPrimary
 import com.literaltranslator.ui.theme.mainFont
@@ -102,7 +104,7 @@ fun TranslatorInputSection(
                         tint = TextPrimary
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = state.sourceLanguageName,
                     color = TextPrimary,
@@ -110,7 +112,19 @@ fun TranslatorInputSection(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+                IconButton(
+                    onClick = { onIntent(TranslatorIntent.StartVoiceInput) },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_mic),
+                        contentDescription = "Voice input",
+                        tint = if (state.isRecording) Color.Red else TextPrimary
+                    )
+                }
             }
+
             IconButton(
                 onClick = { onIntent(TranslatorIntent.ClearText) },
                 modifier = Modifier.size(24.dp)
@@ -300,4 +314,30 @@ fun TranslatorInputSection(
     }
 }
 
-// TODO: create @Preview for every Compose component
+@Preview(showBackground = true)
+@Composable
+fun TranslatorInputSectionPreview() {
+    TestAppTheme {
+        TranslatorInputSection(
+            state = TranslatorState(
+                inputText = "Hello, how are you?",
+                sourceLanguageName = "English"
+            ),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TranslatorInputSectionEmptyPreview() {
+    TestAppTheme {
+        TranslatorInputSection(
+            state = TranslatorState(
+                inputText = "",
+                sourceLanguageName = "English"
+            ),
+            onIntent = {}
+        )
+    }
+}

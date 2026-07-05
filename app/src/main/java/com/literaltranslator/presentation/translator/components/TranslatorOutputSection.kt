@@ -14,12 +14,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import com.literaltranslator.R
 import com.literaltranslator.presentation.translator.TranslatorIntent
 import com.literaltranslator.presentation.translator.TranslatorState
 import com.literaltranslator.ui.theme.TextPrimary
 import com.literaltranslator.ui.theme.mainFont
 import com.literaltranslator.ui.components.shimmerLoading
+import com.literaltranslator.ui.theme.TestAppTheme
 
 @Composable
 fun TranslatorOutputSection(
@@ -128,5 +130,34 @@ fun TranslatorOutputSection(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TranslatorOutputSectionPreview() {
+    TestAppTheme {
+        TranslatorOutputSection(
+            state = TranslatorState(
+                translatedText = "Olá Mundo",
+                targetLanguageName = "Portuguese",
+                isTranslationFavorite = true
+            ),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TranslatorOutputSectionLoadingPreview() {
+    TestAppTheme {
+        TranslatorOutputSection(
+            state = TranslatorState(
+                isLoading = true,
+                targetLanguageName = "Portuguese"
+            ),
+            onIntent = {}
+        )
     }
 }

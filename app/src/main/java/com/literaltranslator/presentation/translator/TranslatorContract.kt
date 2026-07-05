@@ -24,7 +24,8 @@ data class TranslatorState(
     val isTranslationFavorite: Boolean = false,
 
     val favorites: List<FavoriteModel> = emptyList(),
-    val isShowingFavorites: Boolean = false
+    val isShowingFavorites: Boolean = false,
+    val isRecording: Boolean = false
 )
 
 // Updated intents interface
@@ -62,6 +63,8 @@ sealed interface TranslatorIntent {
     data object CloseFavorites : TranslatorIntent
     data class DeleteFavorite(val id: Int) : TranslatorIntent
     data class SelectFavorite(val favorite: FavoriteModel) : TranslatorIntent
+
+    data object StartVoiceInput : TranslatorIntent
 }
 
 
@@ -74,4 +77,5 @@ sealed interface TranslatorEffect {
     data class PlaySpeech(val text: String, val langCode: String) : TranslatorEffect
     data class CopyToClipboard(val text: String) : TranslatorEffect
     data class ShareText(val text: String) : TranslatorEffect
+    data class OpenVoiceRecognition(val langCode: String) : TranslatorEffect
 }

@@ -13,4 +13,5 @@
     <string name="translate_to">Translate to</string>
     <string name="search_language_hint">Search language…</string>
     <string name="no_languages_found">No languages found</string>
+    <string name="voice_prompt">Speak now…</string>
 </resources>

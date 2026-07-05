@@ -320,6 +320,12 @@ class TranslatorViewModel(
                 }
                 _inputTextFlow.value = intent.favorite.word
             }
+
+            TranslatorIntent.StartVoiceInput -> {
+                viewModelScope.launch {
+                    _effect.emit(TranslatorEffect.OpenVoiceRecognition(_viewState.value.sourceLangCode))
+                }
+            }
         }
     }
 
