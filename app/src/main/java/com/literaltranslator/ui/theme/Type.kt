@@ -8,16 +8,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.literaltranslator.R
 
-// Define Google Sans FontFamily
-// Note: You must add google_sans_regular.ttf and google_sans_medium.ttf to res/font
 val mainFont = FontFamily(
-    Font(R.font.montserrat_regular, FontWeight.Normal),
-    Font(R.font.montserrat_medium, FontWeight.Medium),
-    Font(R.font.montserrat_bold, FontWeight.Bold)
+    Font(R.font.raleway_regular, FontWeight.Normal),
+    Font(R.font.raleway_medium, FontWeight.Medium),
+    Font(R.font.raleway_bold, FontWeight.Bold)
+)
+
+val titleBarFont = FontFamily(
+    Font(R.font.quicksand_regular, FontWeight.Normal),
+    Font(R.font.quicksand_medium, FontWeight.Medium),
+    Font(R.font.quicksand_bold, FontWeight.Bold)
 )
 
 // Set of Material typography styles to start with
-val Typography = Typography(
+val AppTypography = Typography(
     bodyLarge = TextStyle(
         fontFamily = mainFont,
         fontWeight = FontWeight.Normal,
@@ -39,7 +43,6 @@ val Typography = Typography(
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp
     ),
-    // Apply Google Sans to other styles as well
     bodyMedium = TextStyle(
         fontFamily = mainFont,
         fontWeight = FontWeight.Normal,
