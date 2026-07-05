@@ -119,7 +119,7 @@ fun BottomLanguageSelector(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_swap),
-                    contentDescription = stringResource(R.string.swap_languages_desc),
+                    contentDescription = "Swap languages",
                     tint = Color.Unspecified, // Keep colors from XML resource
                 )
             }
@@ -128,7 +128,9 @@ fun BottomLanguageSelector(
 
     if (state.isSelectingSourceLang) {
         LanguageSelectionSheet(
+            title = stringResource(R.string.translate_from),
             languages = state.availableLanguages,
+            selectedLanguageCode = state.sourceLangCode,
             onLanguageSelected = { onIntent(TranslatorIntent.SelectSourceLanguage(it)) },
             onDismiss = { onIntent(TranslatorIntent.DismissLanguageSelection) }
         )
@@ -136,7 +138,9 @@ fun BottomLanguageSelector(
 
     if (state.isSelectingTargetLang) {
         LanguageSelectionSheet(
+            title = stringResource(R.string.translate_to),
             languages = state.availableLanguages,
+            selectedLanguageCode = state.targetLangCode,
             onLanguageSelected = { onIntent(TranslatorIntent.SelectTargetLanguage(it)) },
             onDismiss = { onIntent(TranslatorIntent.DismissLanguageSelection) }
         )

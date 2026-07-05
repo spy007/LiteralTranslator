@@ -32,7 +32,7 @@ fun TopNavigationBar(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_menu),
-                contentDescription = stringResource(R.string.menu_desc),
+                contentDescription = "Menu",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
@@ -54,7 +54,7 @@ fun TopNavigationBar(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_star),
-                contentDescription = stringResource(R.string.favorites_desc),
+                contentDescription = "Favorites",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )

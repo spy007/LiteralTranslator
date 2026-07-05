@@ -1,19 +1,16 @@
 <resources>
     <string name="app_name">Literal Translator</string>
-    <string name="menu_desc">Menu</string>
-    <string name="source_speech_desc">Source speech</string>
-    <string name="clear_desc">Clear</string>
     <string name="input_hint">Type something…</string>
-    <string name="target_speech_desc">Target speech</string>
-    <string name="favorites_desc">Favorites</string>
-    <string name="copy_desc">Copy</string>
-    <string name="share_desc">Share</string>
-    <string name="more_desc">More</string>
+    <string name="favorites_title">Favorites</string>
+    <string name="favorites_empty">No favorites yet</string>
     <string name="tab_translation">Translation</string>
     <string name="translation_hint">Translation will appear here…</string>
     <string name="english">English</string>
     <string name="portuguese">Portuguese</string>
-    <string name="swap_languages_desc">Swap languages</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="error_prefix">Error: %s</string>
+    <string name="translate_from">Translate from</string>
+    <string name="translate_to">Translate to</string>
+    <string name="search_language_hint">Search language…</string>
+    <string name="no_languages_found">No languages found</string>
 </resources>

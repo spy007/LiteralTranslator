@@ -98,7 +98,7 @@ fun TranslatorInputSection(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_sound),
-                        contentDescription = stringResource(R.string.source_speech_desc),
+                        contentDescription = "Source speech",
                         tint = TextPrimary
                     )
                 }
@@ -117,7 +117,7 @@ fun TranslatorInputSection(
             ) {
                 Icon(
                     Icons.Default.Clear,
-                    contentDescription = stringResource(R.string.clear_desc),
+                    contentDescription = "Clear",
                     tint = TextLightGray
                 )
             }
@@ -256,7 +256,7 @@ fun TranslatorInputSection(
                                         ) {
                                             Icon(
                                                 painter = painterResource(id = R.drawable.ic_sound),
-                                                contentDescription = stringResource(R.string.target_speech_desc),
+                                                contentDescription = "Target speech",
                                                 tint = TextPrimary,
                                                 modifier = Modifier.size(16.dp)
                                             )
@@ -277,13 +277,13 @@ fun TranslatorInputSection(
                                             if (state.isSelectedWordFavorite) {
                                                 Icon(
                                                     painter = painterResource(id = R.drawable.ic_star),
-                                                    contentDescription = stringResource(R.string.favorites_desc),
+                                                    contentDescription = "Favorites",
                                                     modifier = Modifier.size(16.dp)
                                                 )
                                             } else {
                                                 Icon(
                                                     painter = painterResource(id = R.drawable.ic_star_outlined),
-                                                    contentDescription = stringResource(R.string.favorites_desc),
+                                                    contentDescription = "Favorites",
                                                     tint = TextPrimary,
                                                     modifier = Modifier.size(16.dp)
                                                 )

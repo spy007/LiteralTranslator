@@ -47,7 +47,7 @@ fun TranslatorOutputSection(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_sound),
-                            contentDescription = stringResource(R.string.target_speech_desc)
+                            contentDescription = "Target speech"
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -68,7 +68,7 @@ fun TranslatorOutputSection(
                             painter = painterResource(
                                 id = if (state.isTranslationFavorite) R.drawable.ic_star else R.drawable.ic_star_outlined
                             ),
-                            contentDescription = stringResource(R.string.favorites_desc),
+                            contentDescription = "Favorites",
                             tint = if (state.isTranslationFavorite) Color(0xFFFFB300) else TextPrimary.copy(alpha = 0.6f),
                             modifier = Modifier.size(20.dp)
                         )
@@ -80,7 +80,7 @@ fun TranslatorOutputSection(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_copy),
-                            contentDescription = stringResource(R.string.copy_desc),
+                            contentDescription = "Copy",
                             tint = TextPrimary.copy(alpha = 0.6f)
                         )
                     }
@@ -91,7 +91,7 @@ fun TranslatorOutputSection(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Share,
-                            contentDescription = stringResource(R.string.share_desc),
+                            contentDescription = "Share",
                             tint = TextPrimary.copy(alpha = 0.6f),
                             modifier = Modifier.size(20.dp)
                         )

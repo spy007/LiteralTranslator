@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,7 +41,7 @@ fun FavoritesSheet(
                 .padding(horizontal = 24.dp)
         ) {
             Text(
-                text = "Favorites",
+                text = stringResource(R.string.favorites_title),
                 fontFamily = mainFont,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -54,7 +55,7 @@ fun FavoritesSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No favorites yet",
+                        text = stringResource(R.string.favorites_empty),
                         fontFamily = mainFont,
                         color = TextPrimary.copy(alpha = 0.5f)
                     )
