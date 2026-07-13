@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.literaltranslator"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.literaltranslator"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -32,11 +32,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
