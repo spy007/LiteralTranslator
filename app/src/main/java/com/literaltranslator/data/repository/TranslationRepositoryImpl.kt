@@ -4,6 +4,7 @@ import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.TranslatorOptions
+import com.google.mlkit.nl.translate.Translator
 import com.literaltranslator.data.local.dao.FavoriteDao
 import com.literaltranslator.data.local.entity.FavoriteWord
 import com.literaltranslator.domain.repository.TranslationRepository
@@ -20,34 +21,54 @@ class TranslationRepositoryImpl(
     private val favoriteDao: FavoriteDao? = null
 ) : TranslationRepository {
 
+    private var currentTranslator: Translator? = null
+    private var currentSourceLang: String? = null
+    private var currentTargetLang: String? = null
+
     override suspend fun translateText(
         text: String,
         sourceLangCode: String,
         targetLangCode: String
     ): Result<String> = withContext(Dispatchers.IO) {
-        // FIXME: check that it seems it initializes this translation object for each performing translation. better to save this object separately may be like in data store check how it was made in CircleLoop project
         try {
-            val options = TranslatorOptions.Builder()
-                .setSourceLanguage(sourceLangCode)
-                .setTargetLanguage(targetLangCode)
-                .build()
-
-            val client = Translation.getClient(options)
-
-            val conditions = DownloadConditions.Builder()
-                .requireWifi()
-                .build()
-
-            client.downloadModelIfNeeded(conditions).await()
+            val client = getTranslator(sourceLangCode, targetLangCode)
 
             val translatedResult = client.translate(text).await()
-
-            client.close()
 
             Result.success(translatedResult)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun getTranslator(sourceLang: String, targetLang: String): Translator {
+        if (currentTranslator != null &&
+            currentSourceLang == sourceLang &&
+            currentTargetLang == targetLang
+        ) {
+            return currentTranslator!!
+        }
+
+        // Close previous translator if it exists
+        currentTranslator?.close()
+
+        val options = TranslatorOptions.Builder()
+            .setSourceLanguage(sourceLang)
+            .setTargetLanguage(targetLang)
+            .build()
+
+        val client = Translation.getClient(options)
+        val conditions = DownloadConditions.Builder()
+            .requireWifi()
+            .build()
+
+        client.downloadModelIfNeeded(conditions).await()
+
+        currentTranslator = client
+        currentSourceLang = sourceLang
+        currentTargetLang = targetLang
+
+        return client
     }
 
     override suspend fun getAvailableLanguages(): Result<List<LanguageModel>> = withContext(Dispatchers.IO) {
