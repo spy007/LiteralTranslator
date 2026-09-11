@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
-import com.literaltranslator.presentation.translator.TranslatorScreen
+import com.literaltranslator.presentation.translator.FuturisticTranslatorScreen
 import com.literaltranslator.ui.theme.TestAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TestAppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding: PaddingValues ->
-                    TranslatorScreen(modifier = Modifier.padding(innerPadding))
+                    FuturisticTranslatorScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }

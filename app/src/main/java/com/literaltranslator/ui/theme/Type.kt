@@ -20,6 +20,11 @@ val titleBarFont = FontFamily(
     Font(R.font.quicksand_bold, FontWeight.Bold)
 )
 
+val michromaFont = FontFamily(
+    Font(R.font.michroma_regular, FontWeight.Normal)
+)
+
+
 // Set of Material typography styles to start with
 val AppTypography = Typography(
     bodyLarge = TextStyle(
