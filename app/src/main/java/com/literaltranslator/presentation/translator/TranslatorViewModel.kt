@@ -3,14 +3,16 @@ package com.literaltranslator.presentation.translator
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.literaltranslator.domain.repository.TranslationRepository
+import com.literaltranslator.domain.model.LanguageModel
+import com.literaltranslator.domain.model.FavoriteModel
 import com.literaltranslator.utils.getLanguageName
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Locale
 import com.literaltranslator.R
 
-@OptIn(FlowPreview::class) // Required for debounce operator
 class TranslatorViewModel(
     private val repository: TranslationRepository
 ) : ViewModel() {
@@ -21,47 +23,45 @@ class TranslatorViewModel(
     private val _effect = MutableSharedFlow<TranslatorEffect>()
     val effect: SharedFlow<TranslatorEffect> = _effect.asSharedFlow()
 
-    // Special stream to track user input changes
-    private val _inputTextFlow = MutableStateFlow("")
+    private val translationJobs = mutableMapOf<String, Job>()
+    private var tabCounter = 1
 
     init {
-        // Start reactive listening for text input
-        _inputTextFlow
-            .debounce(600) // Wait 600 ms after the user finishes typing
-            .filter { text -> text.isNotBlank() } // Ignore empty strings
-            .distinctUntilChanged() // Do not re-translate if the text hasn't changed
-            .onEach {
-                triggerTranslation() // Trigger translation automatically!
-            }
-            .launchIn(viewModelScope)
-
-        // Initialize languages when creating ViewModel
         initializeDefaultLanguages()
-        // Immediately load supported languages from ML Kit in the background
         loadAvailableLanguages()
 
         // Observe favorites from database
         repository.getAllFavorites()
             .onEach { favs ->
                 _viewState.update { it.copy(favorites = favs) }
+                // Refresh favorite statuses for current tabs/targets
+                refreshFavoritesStatus()
             }
             .launchIn(viewModelScope)
     }
 
     private fun initializeDefaultLanguages() {
-        // Get the system language of the phone (e.g., "ru", "en", "pt")
         val systemLangCode = Locale.getDefault().language
+        val sourceName = getLanguageName(systemLangCode)
+        val targetLangCode = if (systemLangCode == "es") "en" else "es"
+        val targetName = getLanguageName(targetLangCode)
 
         _viewState.update { currentState ->
-            val sourceName = getLanguageName(systemLangCode)
-            val targetLangCode = if (systemLangCode == "es") "en" else "es"
-            val targetName = getLanguageName(targetLangCode)
-
-            currentState.copy(
+            val initialTab = TranslationTabState(
+                tabName = systemLangCode.uppercase(Locale.ROOT),
                 sourceLangCode = systemLangCode,
                 sourceLanguageName = sourceName,
-                targetLangCode = targetLangCode,
-                targetLanguageName = targetName
+                results = listOf(
+                    TranslationResultState(
+                        targetLangCode = targetLangCode,
+                        targetLanguageName = targetName
+                    )
+                )
+            )
+            tabCounter = 1
+            currentState.copy(
+                tabs = listOf(initialTab),
+                selectedTabId = initialTab.id
             )
         }
     }
@@ -76,219 +76,370 @@ class TranslatorViewModel(
 
     fun handleIntent(intent: TranslatorIntent) {
         when (intent) {
-            is TranslatorIntent.SetSourceLanguage -> {
-                val sourceLanguageName = Locale(Locale.getDefault().language).getDisplayName(Locale.getDefault())
-                _viewState.update {
-                    it.copy(
-                        sourceLanguageName = sourceLanguageName,
-                        targetLanguageName = sourceLanguageName,
-                        isSelectingSourceLang = false
+            TranslatorIntent.AddInputTab -> {
+                val systemLangCode = Locale.getDefault().language
+                val sourceName = getLanguageName(systemLangCode)
+                val targetLangCode = if (systemLangCode == "es") "en" else "es"
+                val targetName = getLanguageName(targetLangCode)
+
+                _viewState.update { currentState ->
+                    val newTab = TranslationTabState(
+                        tabName = systemLangCode.uppercase(Locale.ROOT),
+                        sourceLangCode = systemLangCode,
+                        sourceLanguageName = sourceName,
+                        results = listOf(
+                            TranslationResultState(
+                                targetLangCode = targetLangCode,
+                                targetLanguageName = targetName
+                            )
+                        )
                     )
+                    val updatedTabs = currentState.tabs + newTab
+                    currentState.copy(tabs = updatedTabs, selectedTabId = newTab.id)
                 }
+            }
+
+            is TranslatorIntent.RemoveInputTab -> {
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.filter { it.id != intent.id }
+                    val finalTabs = if (updatedTabs.isEmpty()) {
+                        val systemLangCode = Locale.getDefault().language
+                        listOf(
+                            TranslationTabState(
+                                tabName = systemLangCode.uppercase(Locale.ROOT),
+                                sourceLangCode = systemLangCode,
+                                sourceLanguageName = getLanguageName(systemLangCode),
+                                results = listOf(
+                                    TranslationResultState(
+                                        targetLangCode = if (systemLangCode == "es") "en" else "es",
+                                        targetLanguageName = getLanguageName(if (systemLangCode == "es") "en" else "es")
+                                    )
+                                )
+                            )
+                        )
+                    } else updatedTabs
+
+                    val newSelectedId = if (currentState.selectedTabId == intent.id) {
+                        finalTabs.first().id
+                    } else {
+                        currentState.selectedTabId
+                    }
+
+                    currentState.copy(tabs = finalTabs, selectedTabId = newSelectedId)
+                }
+                translationJobs[intent.id]?.cancel()
+                translationJobs.remove(intent.id)
+            }
+
+            is TranslatorIntent.SelectInputTab -> {
+                _viewState.update { it.copy(selectedTabId = intent.id) }
+            }
+
+            is TranslatorIntent.AddTranslationTarget -> {
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == intent.tabId) {
+                            // Find a language that isn't already used as a target, or default to English/Spanish
+                            val existingCodes = tab.results.map { it.targetLangCode }
+                            val nextLang = currentState.availableLanguages.firstOrNull { it.code !in existingCodes && it.code != tab.sourceLangCode }
+                                ?: LanguageModel("fr", "French")
+
+                            val newResult = TranslationResultState(
+                                targetLangCode = nextLang.code,
+                                targetLanguageName = nextLang.name
+                            )
+                            tab.copy(results = tab.results + newResult)
+                        } else tab
+                    }
+                    currentState.copy(tabs = updatedTabs)
+                }
+                triggerTranslation(intent.tabId)
+            }
+
+            is TranslatorIntent.RemoveTranslationTarget -> {
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == intent.tabId) {
+                            val updatedResults = tab.results.filter { it.id != intent.targetId }
+                            val finalResults = if (updatedResults.isEmpty()) {
+                                listOf(TranslationResultState())
+                            } else updatedResults
+                            tab.copy(results = finalResults)
+                        } else tab
+                    }
+                    currentState.copy(tabs = updatedTabs)
+                }
+            }
+
+            is TranslatorIntent.ChangeInputText -> {
+                val currentTabId = _viewState.value.selectedTabId
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == currentTabId) {
+                            tab.copy(inputText = intent.text, selectedWordRange = null)
+                        } else tab
+                    }
+                    currentState.copy(tabs = updatedTabs)
+                }
+                launchAutoTranslation(currentTabId)
             }
 
             TranslatorIntent.ExecuteTranslation -> {
-                triggerTranslation()
+                triggerTranslation(_viewState.value.selectedTabId)
             }
 
-            TranslatorIntent.SwapLanguages -> {
+            is TranslatorIntent.SwapLanguages -> {
+                val currentTabId = _viewState.value.selectedTabId
                 _viewState.update { currentState ->
-                    currentState.copy(
-                        sourceLanguageName = currentState.targetLanguageName,
-                        targetLanguageName = currentState.sourceLanguageName,
-                        sourceLangCode = currentState.targetLangCode,
-                        targetLangCode = currentState.sourceLangCode,
-                        inputText = currentState.translatedText,
-                        translatedText = currentState.inputText,
-                        selectedWordRange = null
-                    )
-                }
-                // Update the input text flow to match the new source text
-                _inputTextFlow.value = _viewState.value.inputText
-                // Trigger translation immediately with the new language configuration
-                triggerTranslation()
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == currentTabId) {
+                            val target = tab.results.find { it.id == intent.targetId }
+                            if (target != null) {
+                                val newSourceCode = target.targetLangCode
+                                val newSourceName = target.targetLanguageName
+                                val newTargetCode = tab.sourceLangCode
+                                val newTargetName = tab.sourceLanguageName
+                                val newInputText = target.translatedText
 
+                                val updatedResults = tab.results.map { res ->
+                                    if (res.id == intent.targetId) {
+                                        res.copy(
+                                            targetLangCode = newTargetCode,
+                                            targetLanguageName = newTargetName,
+                                            translatedText = tab.inputText
+                                        )
+                                    } else res
+                                }
+
+                                tab.copy(
+                                    sourceLangCode = newSourceCode,
+                                    sourceLanguageName = newSourceName,
+                                    inputText = newInputText,
+                                    results = updatedResults,
+                                    selectedWordRange = null
+                                )
+                            } else tab
+                        } else tab
+                    }
+                    currentState.copy(tabs = updatedTabs)
+                }
+
+                triggerTranslation(currentTabId)
                 viewModelScope.launch {
                     _effect.emit(TranslatorEffect.TriggerHapticFeedback)
                 }
             }
 
             TranslatorIntent.ClearText -> {
-                _inputTextFlow.value = ""
-                _viewState.update {
-                    it.copy(
-                        inputText = "",
-                        translatedText = "",
-                        selectedWordRange = null,
-                        isTranslationFavorite = false
-                    )
+                val currentTabId = _viewState.value.selectedTabId
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == currentTabId) {
+                            tab.copy(
+                                inputText = "",
+                                selectedWordRange = null,
+                                results = tab.results.map { it.copy(translatedText = "", isTranslationFavorite = false) }
+                            )
+                        } else tab
+                    }
+                    currentState.copy(tabs = updatedTabs)
                 }
+                translationJobs[currentTabId]?.cancel()
             }
 
             TranslatorIntent.SpeakSourceText -> {
-                val text = _viewState.value.inputText
-                val lang = _viewState.value.sourceLangCode
-                if (text.isNotBlank()) {
-                    viewModelScope.launch { _effect.emit(TranslatorEffect.PlaySpeech(text, lang)) }
+                val tab = _viewState.value.currentTab
+                if (tab != null && tab.inputText.isNotBlank()) {
+                    viewModelScope.launch {
+                        _effect.emit(TranslatorEffect.PlaySpeech(tab.inputText, tab.sourceLangCode))
+                    }
                 }
             }
 
-            TranslatorIntent.SpeakTargetText -> {
-                val text = _viewState.value.translatedText
-                val lang = _viewState.value.targetLangCode
-                if (text.isNotBlank()) {
-                    viewModelScope.launch { _effect.emit(TranslatorEffect.PlaySpeech(text, lang)) }
+            is TranslatorIntent.SpeakTargetText -> {
+                val tab = _viewState.value.currentTab
+                val target = tab?.results?.find { it.id == intent.targetId }
+                if (target != null && target.translatedText.isNotBlank()) {
+                    viewModelScope.launch {
+                        _effect.emit(TranslatorEffect.PlaySpeech(target.translatedText, target.targetLangCode))
+                    }
                 }
             }
 
             TranslatorIntent.SpeakSelectedWordTranslation -> {
-                val text = _viewState.value.selectedWordTranslation
-                val lang = _viewState.value.targetLangCode
-                if (text.isNotBlank()) {
-                    viewModelScope.launch { _effect.emit(TranslatorEffect.PlaySpeech(text, lang)) }
+                val tab = _viewState.value.currentTab
+                if (tab != null && tab.selectedWordTranslation.isNotBlank()) {
+                    viewModelScope.launch {
+                        _effect.emit(TranslatorEffect.PlaySpeech(tab.selectedWordTranslation, tab.results.firstOrNull()?.targetLangCode ?: "en"))
+                    }
                 }
             }
 
-            TranslatorIntent.CopyTranslation -> {
-                val text = _viewState.value.translatedText
-                if (text.isNotBlank()) {
+            is TranslatorIntent.CopyTranslation -> {
+                val tab = _viewState.value.currentTab
+                val target = tab?.results?.find { it.id == intent.targetId }
+                if (target != null && target.translatedText.isNotBlank()) {
                     viewModelScope.launch {
-                        _effect.emit(TranslatorEffect.CopyToClipboard(text))
+                        _effect.emit(TranslatorEffect.CopyToClipboard(target.translatedText))
                         _effect.emit(TranslatorEffect.ShowToastRes(R.string.copied_to_clipboard))
                     }
                 }
             }
 
-            TranslatorIntent.ShareTranslation -> {
-                val text = _viewState.value.translatedText
-                if (text.isNotBlank()) {
+            is TranslatorIntent.ShareTranslation -> {
+                val tab = _viewState.value.currentTab
+                val target = tab?.results?.find { it.id == intent.targetId }
+                if (target != null && target.translatedText.isNotBlank()) {
                     viewModelScope.launch {
-                        _effect.emit(TranslatorEffect.ShareText(text))
+                        _effect.emit(TranslatorEffect.ShareText(target.translatedText))
                     }
                 }
             }
 
-            is TranslatorIntent.ClickSourceLanguage -> {
-                _viewState.update { it.copy(isSelectingSourceLang = true) }
+            TranslatorIntent.ClickSourceLanguage -> {
+                _viewState.update { it.copy(isSelectingSourceLang = true, isSelectingTargetLang = false, selectingTargetId = null) }
             }
 
             is TranslatorIntent.ClickTargetLanguage -> {
-                _viewState.update { it.copy(isSelectingTargetLang = true) }
+                _viewState.update { it.copy(isSelectingTargetLang = true, isSelectingSourceLang = false, selectingTargetId = intent.targetId) }
             }
 
-            is TranslatorIntent.DismissLanguageSelection -> {
+            TranslatorIntent.DismissLanguageSelection -> {
                 _viewState.update {
                     it.copy(
                         isSelectingSourceLang = false,
-                        isSelectingTargetLang = false
+                        isSelectingTargetLang = false,
+                        selectingTargetId = null
                     )
                 }
             }
 
             is TranslatorIntent.SelectSourceLanguage -> {
-                _viewState.update {
-                    it.copy(
-                        sourceLanguageName = intent.language.name,
-                        sourceLangCode = intent.language.code,
-                        isSelectingSourceLang = false
-                    )
+                val currentTabId = _viewState.value.selectedTabId
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == currentTabId) {
+                            tab.copy(
+                                tabName = intent.language.code.uppercase(Locale.ROOT),
+                                sourceLanguageName = intent.language.name,
+                                sourceLangCode = intent.language.code
+                            )
+                        } else tab
+                    }
+                    currentState.copy(tabs = updatedTabs, isSelectingSourceLang = false)
                 }
-                triggerTranslation()
+                triggerTranslation(currentTabId)
             }
 
             is TranslatorIntent.SelectTargetLanguage -> {
-                _viewState.update {
-                    it.copy(
-                        targetLanguageName = intent.language.name,
-                        targetLangCode = intent.language.code,
-                        isSelectingTargetLang = false
-                    )
+                val currentTabId = _viewState.value.selectedTabId
+                val targetId = _viewState.value.selectingTargetId
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == currentTabId) {
+                            val updatedResults = tab.results.map { res ->
+                                if (res.id == targetId) {
+                                    res.copy(
+                                        targetLanguageName = intent.language.name,
+                                        targetLangCode = intent.language.code
+                                    )
+                                } else res
+                              }
+                            tab.copy(results = updatedResults)
+                        } else tab
+                    }
+                    currentState.copy(tabs = updatedTabs, isSelectingTargetLang = false, selectingTargetId = null)
                 }
-                triggerTranslation()
-            }
-
-            is TranslatorIntent.SwitchLanguages -> {
-                _viewState.update {
-                    it.copy(
-                        sourceLanguageName = it.targetLanguageName,
-                        targetLanguageName = it.sourceLanguageName,
-                        sourceLangCode = it.targetLangCode,
-                        targetLangCode = it.sourceLangCode,
-                        selectedWordRange = null
-                    )
-                }
-                triggerTranslation()
+                triggerTranslation(currentTabId)
             }
 
             is TranslatorIntent.SelectWord -> {
+                val currentTabId = _viewState.value.selectedTabId
                 val range = intent.range
-                if (range != null && range.first in _viewState.value.inputText.indices) {
-                    val word = _viewState.value.inputText.substring(range)
-                    _viewState.update {
-                        it.copy(
-                            selectedWordRange = range,
-                            selectedWord = word,
-                            selectedWordTranslation = "", // Clear previous translation
-                            isSelectedWordFavorite = false
-                        )
+                _viewState.update { currentState ->
+                    val updatedTabs = currentState.tabs.map { tab ->
+                        if (tab.id == currentTabId) {
+                            if (range != null && range.first in tab.inputText.indices) {
+                                val word = tab.inputText.substring(range)
+                                tab.copy(
+                                    selectedWordRange = range,
+                                    selectedWord = word,
+                                    selectedWordTranslation = "",
+                                    isSelectedWordFavorite = false
+                                )
+                            } else {
+                                tab.copy(
+                                    selectedWordRange = null,
+                                    selectedWord = "",
+                                    selectedWordTranslation = "",
+                                    isSelectedWordFavorite = false
+                                )
+                            }
+                        } else tab
                     }
-                    triggerWordTranslation(word)
-                } else {
-                    _viewState.update { 
-                        it.copy(
-                            selectedWordRange = null, 
-                            selectedWordTranslation = "",
-                            isSelectedWordFavorite = false
-                        ) 
-                    }
+                    currentState.copy(tabs = updatedTabs)
+                }
+                
+                val updatedTab = _viewState.value.tabs.find { it.id == currentTabId }
+                if (updatedTab != null && updatedTab.selectedWord.isNotBlank()) {
+                    triggerWordTranslation(currentTabId, updatedTab.selectedWord)
                 }
             }
 
             TranslatorIntent.ToggleFavoriteSelectedWord -> {
-                val state = _viewState.value
-                if (state.selectedWord.isNotBlank() && state.selectedWordTranslation.isNotBlank()) {
+                val currentTabId = _viewState.value.selectedTabId
+                val tab = _viewState.value.tabs.find { it.id == currentTabId } ?: return
+                if (tab.selectedWord.isNotBlank() && tab.selectedWordTranslation.isNotBlank()) {
                     viewModelScope.launch {
+                        val firstTarget = tab.results.firstOrNull() ?: return@launch
                         repository.toggleFavorite(
-                            word = state.selectedWord,
-                            translation = state.selectedWordTranslation,
-                            sourceLang = state.sourceLangCode,
-                            targetLang = state.targetLangCode
+                            word = tab.selectedWord,
+                            translation = tab.selectedWordTranslation,
+                            sourceLang = tab.sourceLangCode,
+                            targetLang = firstTarget.targetLangCode
                         )
                         val isFav = repository.isFavorite(
-                            state.selectedWord,
-                            state.sourceLangCode,
-                            state.targetLangCode
+                            tab.selectedWord,
+                            tab.sourceLangCode,
+                            firstTarget.targetLangCode
                         )
-                        _viewState.update { it.copy(isSelectedWordFavorite = isFav) }
+                        _viewState.update { currentState ->
+                            currentState.copy(tabs = currentState.tabs.map { 
+                                if (it.id == currentTabId) it.copy(isSelectedWordFavorite = isFav) else it
+                            })
+                        }
                     }
                 }
             }
 
-            TranslatorIntent.ToggleFavoriteTranslation -> {
-                val state = _viewState.value
-                if (state.inputText.isNotBlank() && state.translatedText.isNotBlank()) {
+            is TranslatorIntent.ToggleFavoriteTranslation -> {
+                val currentTabId = _viewState.value.selectedTabId
+                val tab = _viewState.value.tabs.find { it.id == currentTabId } ?: return
+                val target = tab.results.find { it.id == intent.targetId } ?: return
+                if (tab.inputText.isNotBlank() && target.translatedText.isNotBlank()) {
                     viewModelScope.launch {
                         repository.toggleFavorite(
-                            word = state.inputText,
-                            translation = state.translatedText,
-                            sourceLang = state.sourceLangCode,
-                            targetLang = state.targetLangCode
+                            word = tab.inputText,
+                            translation = target.translatedText,
+                            sourceLang = tab.sourceLangCode,
+                            targetLang = target.targetLangCode
                         )
                         val isFav = repository.isFavorite(
-                            state.inputText,
-                            state.sourceLangCode,
-                            state.targetLangCode
+                            tab.inputText,
+                            tab.sourceLangCode,
+                            target.targetLangCode
                         )
-                        _viewState.update { it.copy(isTranslationFavorite = isFav) }
+                        _viewState.update { currentState ->
+                            currentState.copy(tabs = currentState.tabs.map { t ->
+                                if (t.id == currentTabId) {
+                                    t.copy(results = t.results.map { r ->
+                                        if (r.id == intent.targetId) r.copy(isTranslationFavorite = isFav) else r
+                                    })
+                                } else t
+                            })
+                        }
                     }
                 }
-            }
-
-            is TranslatorIntent.ChangeInputText -> {
-                // Update the text in UI immediately (so characters appear without lag)
-                _viewState.update { it.copy(inputText = intent.text, selectedWordRange = null) }
-                // And send the text to the auto-translation stream
-                _inputTextFlow.value = intent.text
             }
 
             TranslatorIntent.OpenFavorites -> {
@@ -306,92 +457,156 @@ class TranslatorViewModel(
             }
 
             is TranslatorIntent.SelectFavorite -> {
-                _viewState.update {
-                    it.copy(
+                _viewState.update { currentState ->
+                    val newTab = TranslationTabState(
+                        tabName = intent.favorite.sourceLangCode.uppercase(Locale.ROOT),
                         inputText = intent.favorite.word,
-                        translatedText = intent.favorite.translation,
                         sourceLangCode = intent.favorite.sourceLangCode,
-                        targetLangCode = intent.favorite.targetLangCode,
                         sourceLanguageName = getLanguageName(intent.favorite.sourceLangCode),
-                        targetLanguageName = getLanguageName(intent.favorite.targetLangCode),
-                        isShowingFavorites = false,
-                        isTranslationFavorite = true
+                        results = listOf(
+                            TranslationResultState(
+                                targetLangCode = intent.favorite.targetLangCode,
+                                targetLanguageName = getLanguageName(intent.favorite.targetLangCode),
+                                translatedText = intent.favorite.translation,
+                                isTranslationFavorite = true
+                            )
+                        )
+                    )
+                    currentState.copy(
+                        tabs = currentState.tabs + newTab,
+                        selectedTabId = newTab.id,
+                        isShowingFavorites = false
                     )
                 }
-                _inputTextFlow.value = intent.favorite.word
             }
 
             TranslatorIntent.StartVoiceInput -> {
-                viewModelScope.launch {
-                    _effect.emit(TranslatorEffect.OpenVoiceRecognition(_viewState.value.sourceLangCode))
+                val tab = _viewState.value.currentTab
+                if (tab != null) {
+                    viewModelScope.launch {
+                        _effect.emit(TranslatorEffect.OpenVoiceRecognition(tab.sourceLangCode))
+                    }
                 }
             }
         }
     }
 
-    private fun triggerWordTranslation(word: String) {
+    private fun launchAutoTranslation(tabId: String) {
+        translationJobs[tabId]?.cancel()
+        translationJobs[tabId] = viewModelScope.launch {
+            delay(600)
+            triggerTranslation(tabId)
+        }
+    }
+
+    private fun triggerWordTranslation(tabId: String, word: String) {
         if (word.isBlank()) return
-        val currentState = _viewState.value
+        val tab = _viewState.value.tabs.find { it.id == tabId } ?: return
+        val target = tab.results.firstOrNull() ?: return
 
         viewModelScope.launch {
             val result = repository.translateText(
                 word,
-                currentState.sourceLangCode,
-                currentState.targetLangCode
+                tab.sourceLangCode,
+                target.targetLangCode
             )
 
             result.onSuccess { translation ->
                 val isFav = repository.isFavorite(
                     word,
-                    currentState.sourceLangCode,
-                    currentState.targetLangCode
+                    tab.sourceLangCode,
+                    target.targetLangCode
                 )
-                _viewState.update { 
-                    it.copy(
-                        selectedWordTranslation = translation,
-                        isSelectedWordFavorite = isFav
-                    ) 
+                _viewState.update { currentState ->
+                    currentState.copy(tabs = currentState.tabs.map { t ->
+                        if (t.id == tabId) t.copy(selectedWordTranslation = translation, isSelectedWordFavorite = isFav) else t
+                    })
                 }
             }
         }
     }
 
-    private fun triggerTranslation() {
-        val currentState = _viewState.value
-        val textToTranslate = currentState.inputText
+    private fun triggerTranslation(tabId: String) {
+        val tab = _viewState.value.tabs.find { it.id == tabId } ?: return
+        if (tab.inputText.isBlank()) {
+            _viewState.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { t ->
+                    if (t.id == tabId) {
+                        t.copy(results = t.results.map { r -> r.copy(translatedText = "", isTranslationFavorite = false) })
+                    } else t
+                })
+            }
+            return
+        }
 
-        if (textToTranslate.isBlank()) return
+        tab.results.forEach { target ->
+            viewModelScope.launch {
+                _viewState.update { currentState ->
+                    currentState.copy(tabs = currentState.tabs.map { t ->
+                        if (t.id == tabId) {
+                            t.copy(results = t.results.map { r ->
+                                if (r.id == target.id) r.copy(isLoading = true, error = null) else r
+                            })
+                        } else t
+                    })
+                }
 
-        viewModelScope.launch {
-            _viewState.update { it.copy(isLoading = true, error = null, isTranslationFavorite = false) }
-
-            val result = repository.translateText(
-                textToTranslate,
-                currentState.sourceLangCode,
-                currentState.targetLangCode
-            )
-
-            result.onSuccess { translationResult ->
-                val isFav = repository.isFavorite(
-                    textToTranslate,
-                    currentState.sourceLangCode,
-                    currentState.targetLangCode
+                val result = repository.translateText(
+                    tab.inputText,
+                    tab.sourceLangCode,
+                    target.targetLangCode
                 )
-                _viewState.update {
-                    it.copy(
-                        translatedText = translationResult,
-                        isLoading = false,
-                        isTranslationFavorite = isFav
+
+                result.onSuccess { translationResult ->
+                    val isFav = repository.isFavorite(
+                        tab.inputText,
+                        tab.sourceLangCode,
+                        target.targetLangCode
+                    )
+                    _viewState.update { currentState ->
+                        currentState.copy(tabs = currentState.tabs.map { t ->
+                            if (t.id == tabId) {
+                                t.copy(results = t.results.map { r ->
+                                    if (r.id == target.id) r.copy(translatedText = translationResult, isLoading = false, isTranslationFavorite = isFav) else r
+                                })
+                            } else t
+                        })
+                    }
+                }.onFailure { exception ->
+                    _viewState.update { currentState ->
+                        currentState.copy(tabs = currentState.tabs.map { t ->
+                            if (t.id == tabId) {
+                                t.copy(results = t.results.map { r ->
+                                    if (r.id == target.id) r.copy(isLoading = false, error = exception.localizedMessage) else r
+                                })
+                            } else t
+                        })
+                    }
+                    _effect.emit(
+                        TranslatorEffect.ShowToastRes(
+                            R.string.error_prefix,
+                            listOf(exception.localizedMessage ?: "Unknown")
+                        )
                     )
                 }
-            }.onFailure { exception ->
-                _viewState.update { it.copy(isLoading = false, error = exception.localizedMessage) }
-                _effect.emit(
-                    TranslatorEffect.ShowToastRes(
-                        R.string.error_prefix,
-                        listOf(exception.localizedMessage ?: "Unknown")
-                    )
-                )
+            }
+        }
+    }
+
+    private fun refreshFavoritesStatus() {
+        viewModelScope.launch {
+            _viewState.update { currentState ->
+                val updatedTabs = currentState.tabs.map { tab ->
+                    val updatedResults = tab.results.map { res ->
+                        val isFav = repository.isFavorite(tab.inputText, tab.sourceLangCode, res.targetLangCode)
+                        res.copy(isTranslationFavorite = isFav)
+                    }
+                    val isWordFav = if (tab.selectedWord.isNotBlank() && tab.results.isNotEmpty()) {
+                        repository.isFavorite(tab.selectedWord, tab.sourceLangCode, tab.results.first().targetLangCode)
+                    } else false
+                    tab.copy(results = updatedResults, isSelectedWordFavorite = isWordFav)
+                }
+                currentState.copy(tabs = updatedTabs)
             }
         }
     }

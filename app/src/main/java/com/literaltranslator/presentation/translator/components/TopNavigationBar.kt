@@ -24,19 +24,6 @@ fun TopNavigationBar(
             .fillMaxWidth()
             .height(40.dp)
     ) {
-        IconButton(
-            onClick = {},
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 4.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_menu),
-                contentDescription = "Menu",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
         Text(
             text = stringResource(R.string.app_name),
             color = Color.White,

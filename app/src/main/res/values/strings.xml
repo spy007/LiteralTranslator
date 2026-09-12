@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Literal Translator</string>
+    <string name="app_name">Multi Literal Translator</string>
     <string name="input_hint">Type something…</string>
     <string name="favorites_title">Favorites</string>
     <string name="favorites_empty">No favorites yet</string>
