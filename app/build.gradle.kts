@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.literaltranslator"
+    namespace = "com.kirillex.multispeakliteral"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.literaltranslator"
+        applicationId = "com.kirillex.multispeakliteral"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
